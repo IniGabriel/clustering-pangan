@@ -86,7 +86,14 @@ Tujuannya adalah membantu akademisi dan masyarakat umum dalam memahami pola keta
 - **Scikit-learn** → untuk implementasi algoritma klasterisasi.  
 
 ---
+### ⚠️ **Penting: Tentang Penyimpanan File**
+Aplikasi ini **dihosting di Streamlit Cloud**, yang menggunakan sistem **penyimpanan sementara**.  
+Artinya:
+- File dataset atau hasil _clustering_ yang diunggah **tidak disimpan secara permanen di server**.  
+- File tersebut mungkin dapat **hilang secara otomatis** apabila aplikasi di-*restart*, *sleep*, atau *redeploy*.  
+- Data pengguna (seperti nama dan email) tetap aman karena disimpan di **database PostgreSQL**, namun file `.csv` atau `.xlsx` mungkin harus **dilakukan upload ulang** jika aplikasi dimulai kembali.  
 
+---            
 ### **Tujuan Akhir**
 Website ini diharapkan dapat:
 - Menjadi alat bantu analisis untuk memahami data ketahanan pangan di Indonesia

@@ -2,46 +2,65 @@ import streamlit as st
 import psycopg2
 import os, sys
 import time
-# === 4️⃣ Database Configuration ===
-from utils.db import get_conn
-# === 0️⃣ Konfigurasi halaman ===
+from utils.db import get_conn  # pastikan fungsi ini mengembalikan psycopg2.connect(...)
+# (opsional) kalau nanti mau validasi isi file, baru import pandas di halaman lain.
+
+# ========== 0️⃣ Halaman ==========
 st.set_page_config(
     page_title="Upload Dataset",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# === 1️⃣ Akses modul session dari folder root ===
+# ========== 1️⃣ Akses modul session dari root ==========
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from session import init_session
 
-# === 2️⃣ Inisialisasi session login ===
+# ========== 2️⃣ Inisialisasi session login ==========
 init_session()
 logged_in = st.session_state.get("logged_in", False)
-username = st.session_state.get("username", "")
-email = st.session_state.get("email", "")
+username  = st.session_state.get("username", "")
+email     = st.session_state.get("email", "")
 
-# === 3️⃣ Load CSS ===
+# ========== 3️⃣ Load CSS ==========
 current_dir = os.path.dirname(__file__)
 css_path = os.path.join(current_dir, "..", "styles.css")
 with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-
+# ========== 4️⃣ Koneksi DB ==========
 con = get_conn()
 cur = con.cursor()
 
-# === 5️⃣ State variables ===
-if "selected_folder" not in st.session_state:
-    st.session_state.selected_folder = ""
-if "show_uploader" not in st.session_state:
-    st.session_state.show_uploader = False
-if "upload_status" not in st.session_state:
-    st.session_state.upload_status = None  # "success", "duplicate", "error"
-if "last_file_path" not in st.session_state:
-    st.session_state.last_file_path = None
+# ========== 5️⃣ Helper ==========
+BASE_UPLOAD_DIR = "uploads"  # relatif terhadap root app (aman untuk Streamlit Cloud & lokal)
 
-# === 6️⃣ Navbar ===
+def get_user_id_by_email(cur, email: str):
+    cur.execute("SELECT user_id FROM Pengguna WHERE email = %s;", (email,))
+    row = cur.fetchone()
+    return row[0] if row else None
+
+def ensure_user_folder(user_id: int) -> str:
+    folder = os.path.join(BASE_UPLOAD_DIR, f"user_{user_id}")
+    os.makedirs(folder, exist_ok=True)
+    return folder
+
+def is_duplicate_dataset(cur, user_id: int, path_dataset: str) -> bool:
+    cur.execute("""
+        SELECT dataset_id
+        FROM dataset
+        WHERE user_id = %s AND path_dataset = %s;
+    """, (user_id, path_dataset))
+    return cur.fetchone() is not None
+
+def insert_dataset(cur, con, nama: str, path_rel: str, user_id: int, sudah_dilatih: bool = False):
+    cur.execute("""
+        INSERT INTO dataset (nama_dataset, path_dataset, user_id, sudah_dilatih)
+        VALUES (%s, %s, %s, %s);
+    """, (nama, path_rel, user_id, sudah_dilatih))
+    con.commit()
+
+# ========== 6️⃣ Navbar ==========
 if logged_in:
     cols = st.columns(7)
     with cols[0]:
@@ -62,14 +81,14 @@ if logged_in:
                 st.session_state.pop(k, None)
             st.switch_page("home.py")
 
-    # === 7️⃣ Judul Halaman ===
+    # ========== 7️⃣ Judul ==========
     st.markdown("<h2 style='text-align:center;'>📤 Upload Dataset</h2>", unsafe_allow_html=True)
     st.write("")
 
-    # === 8️⃣ Kolom besar: Download / Upload / Lihat ===
+    # ========== 8️⃣ Tiga Kolom (Template / Upload / Lihat) ==========
     col1, col2, col3 = st.columns(3)
 
-    # === 📥 Kolom 1: Download Template ===
+    # ---- 📥 Kolom 1: Download Template ----
     with col1:
         st.markdown("""
         <div style="
@@ -81,17 +100,10 @@ if logged_in:
         </div>
         """, unsafe_allow_html=True)
 
-        # csv_template = "col1,col2,col3\n1,2,3\n4,5,6"
-        # st.download_button(
-        #     label="Download Template Dataset",
-        #     data=csv_template,
-        #     file_name="template_dataset.csv",
-        #     use_container_width=True
-        # )
         if st.button("Unduh Template", use_container_width=True):
             st.switch_page("pages/template.py")
 
-    # === 📁 Kolom 2: Pilih Lokasi Upload ===
+    # ---- 📁 Kolom 2: Unggah Dataset (tanpa input path) ----
     with col2:
         st.markdown("""
         <div style="
@@ -103,30 +115,9 @@ if logged_in:
         </div>
         """, unsafe_allow_html=True)
 
-        st.caption("💡 Tuliskan Absolute path contoh: D:/User/Documents/DataApp")
-        folder_input = st.text_input("Masukkan lokasi penyimpanan dataset:", placeholder="Contoh: D:/DataUpload")
+        st.caption("💡 File akan otomatis disimpan di folder internal aplikasi: `uploads/user_{user_id}/`")
 
-        if st.button("✅ Konfirmasi Lokasi"):
-            folder_input = folder_input.strip()
-            if not folder_input:
-                st.error("⚠️ Harap isi path lengkap lokasi penyimpanan terlebih dahulu.")
-                st.session_state.show_uploader = False
-            elif not os.path.isabs(folder_input):
-                st.write(folder_input)
-                st.error("❌ Path tidak valid. Harap masukkan path lengkap (absolute path) tanpa tanda kutip.")
-                st.session_state.show_uploader = False
-            elif not os.path.exists(folder_input):
-                st.error(f"❌ Folder `{folder_input}` tidak ditemukan. Buat foldernya lalu coba lagi.")
-                st.session_state.show_uploader = False
-            elif not os.path.isdir(folder_input):
-                st.error(f"⚠️ Path ditemukan tapi bukan folder: `{folder_input}`")
-                st.session_state.show_uploader = False
-            else:
-                st.session_state.selected_folder = folder_input
-                st.session_state.show_uploader = True
-                st.success(f"✅ Folder diset ke: {folder_input}")
-
-    # === 📊 Kolom 3: Lihat Dataset ===
+    # ---- 📊 Kolom 3: Lihat Dataset ----
     with col3:
         st.markdown("""
         <div style="
@@ -143,78 +134,52 @@ if logged_in:
 
     st.write("---")
 
-    # === 📤 Bagian Upload File ===
-    placeholder = st.empty()  # kontainer dinamis untuk uploader
-    if st.session_state.selected_folder and st.session_state.show_uploader:
-        with placeholder.container():
-            uploaded_file = st.file_uploader("📤 Pilih file CSV untuk diunggah:", type=["csv","xlsx"])
+    # ========== 9️⃣ Form Upload ==========
+    uploaded_file = st.file_uploader("📤 Pilih file dataset (CSV/XLSX):", type=["csv", "xlsx"])
 
-            if uploaded_file:
-                save_path = st.session_state.selected_folder
-                file_path = os.path.join(save_path, uploaded_file.name)
-                st.session_state.last_file_path = file_path  # ✅ simpan path di session
+    user_id = get_user_id_by_email(cur, email)
+    if not user_id:
+        st.error("Terjadi kesalahan silahkan login kembali.")
+        time.sleep(1.5)
+        for key in ["logged_in", "username", "email"]:
+            if key in st.session_state:
+                del st.session_state[key]        
+        st.switch_page("home.py")
+        st.stop()
+    if uploaded_file:
+        try:
 
-                try:
-                    # Ambil user_id
-                    cur.execute("SELECT user_id FROM Pengguna WHERE email = %s;", (email,))
-                    user_row = cur.fetchone()
-                    if not user_row:
-                        st.error("❌ Gagal mendapatkan user_id dari database.")
-                        st.stop()
-                    user_id = user_row[0]
+            # 2) Pastikan folder user ada
+            user_folder = ensure_user_folder(user_id)
 
-                    # Cek duplikat file
-                    cur.execute("""
-                        SELECT dataset_id FROM dataset 
-                        WHERE user_id = %s AND path_dataset = %s;
-                    """, (user_id, file_path))
-                    duplicate = cur.fetchone()
+            # 3) Tentukan path relatif yang akan disimpan ke DB
+            safe_name = uploaded_file.name.strip().replace("\\", "_").replace("/", "_")
+            file_rel_path = os.path.join("uploads", f"user_{user_id}", safe_name)   # disimpan ke DB
+            file_abs_path = os.path.join(user_folder, safe_name)                   # lokasi fisik
 
-                    if not duplicate:
-                        # Simpan file fisik
-                        with open(file_path, "wb") as f:
-                            f.write(uploaded_file.getbuffer())
+            # 4) Cek duplikat berdasarkan user_id + path_dataset
+            if is_duplicate_dataset(cur, user_id, file_rel_path):
+                st.warning(
+                    f"⚠️ Dataset dengan nama yang sama sudah ada di: `{file_rel_path}`.\n"
+                    f"Silakan rename file sebelum upload ulang."
+                )
+            else:
+                # 5) Simpan file fisik
+                with open(file_abs_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-                        # Insert ke database
-                        cur.execute("""
-                            INSERT INTO dataset (nama_dataset, path_dataset, user_id, sudah_dilatih)
-                            VALUES (%s, %s, %s, %s);
-                        """, (uploaded_file.name, file_path, user_id, False))
-                        con.commit()
+                # 6) Simpan metadata ke DB
+                insert_dataset(cur, con, safe_name, file_rel_path, user_id, sudah_dilatih=False)
 
-                        st.session_state.upload_status = "success"
-                        st.success("✅ File berhasil diunggah!")
-                        st.markdown(
-                            f"📁 **File disimpan di:** <span style='color:#007BFF'>{file_path}</span>",
-                            unsafe_allow_html=True
-                        )
-                    else:
-                        st.session_state.upload_status = "duplicate"
-                        st.warning(f"⚠️ Dataset ini sudah diupload pada path: `{file_path}`.\nSilakan rename file dataset agar tidak duplikat!")
+                st.success(f"✅ File '{safe_name}' berhasil diunggah!")
+                st.markdown(
+                    f"📁 **Lokasi (relatif app):** <code>{file_rel_path}</code>",
+                    unsafe_allow_html=True
+                )
 
-                    # tunggu 1.5 detik lalu hilangkan uploader
-                    st.session_state.show_uploader = False
-                    st.rerun()
-
-                except Exception as e:
-                    con.rollback()
-                    st.session_state.upload_status = "error"
-                    st.error(f"❌ Terjadi error: {e}")
-                    time.sleep(1.5)
-                    st.session_state.show_uploader = False
-                    st.rerun()
-
-    elif not st.session_state.selected_folder:
-        st.warning("⚠️ Tentukan lokasi penyimpanan terlebih dahulu sebelum mengunggah dataset.")
-    else:
-        last_path = st.session_state.get("last_file_path", None)
-
-        if st.session_state.upload_status == "success":
-            st.success(f"✅ Upload selesai. Dataset disimpan di:\n`{last_path}`")
-        elif st.session_state.upload_status == "duplicate":
-            st.warning(f"⚠️ Dataset sudah ada di path:\n`{last_path}`\nSilakan rename file agar tidak duplikat!")
-        elif st.session_state.upload_status == "error":
-            st.error(f"❌ Terjadi kesalahan saat memproses file: `{last_path or 'tidak diketahui'}`")
+        except Exception as e:
+            con.rollback()
+            st.error(f"❌ Terjadi error saat upload: {e}")
 
 else:
     st.warning("Mohon maaf terjadi kesalahan. Silahkan login kembali!")

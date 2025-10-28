@@ -46,7 +46,12 @@ cur = conn.cursor()
 cur.execute("SELECT user_id FROM Pengguna WHERE email = %s;", (email,))
 row = cur.fetchone()
 if not row:
-    st.error("❌ User tidak ditemukan.")
+    st.error("Terjadi kesalahan silahkan login kembali.")
+    for key in ["logged_in", "username", "email"]:
+        if key in st.session_state:
+            del st.session_state[key]           
+    time.sleep(1.5)
+    st.switch_page("home.py")
     st.stop()
 user_id = row[0]
 

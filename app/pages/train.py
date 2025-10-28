@@ -262,7 +262,12 @@ if logged_in:
     cur.execute("SELECT user_id FROM Pengguna WHERE email = %s;", (email,))
     user_row = cur.fetchone()
     if not user_row:
-        st.error("User tidak ditemukan di database.")
+        st.error("Terjadi kesalahan silahkan login kembali.")
+        for key in ["logged_in", "username", "email"]:
+            if key in st.session_state:
+                del st.session_state[key]           
+        time.sleep(1.5)
+        st.switch_page("home.py")
         st.stop()
     user_id = user_row[0]
 
@@ -274,7 +279,7 @@ if logged_in:
 
     algoritma = st.selectbox("Pilih Algoritma:", ["K-Means", "AHC", "Spectral Bridges"])
     jumlah_cluster = st.slider("Pilih Jumlah Cluster:", 2, 7, 2, 1)
-    tampilkan = st.button("🧠 Mulai Training")
+    tampilkan = st.button("⚙️ Proses Data")
     template_1_2 = None
 
     if tampilkan:

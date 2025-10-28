@@ -47,8 +47,6 @@ if st.button("Kirim Kode Verifikasi"):
     else:
         otp = generate_otp()
         try:
-            st.write("username:",username)
-            st.write("email:",email)
             send_verification_email(email, otp)
             st.session_state.pending_user = {
                 "username": username,
