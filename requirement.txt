@@ -11,4 +11,3 @@ folium
 psycopg2-binary
 bcrypt
 openpyxl
-psycopg2
