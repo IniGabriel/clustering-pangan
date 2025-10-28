@@ -39,7 +39,7 @@ else:
     with cols[0]:
         st.markdown("<b>Clustering Website</b>", unsafe_allow_html=True)
     with cols[1]:
-        st.page_link("Home.py", label="Home")
+        st.page_link("home.py", label="Home")
     with cols[2]:
         st.page_link("pages/visualization.py", label="Visualization")
     with cols[3]:
