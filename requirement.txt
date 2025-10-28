@@ -1,5 +1,6 @@
 streamlit
 streamlit-folium
+streamlit_folium
 pandas
 numpy
 geopandas
@@ -9,3 +10,5 @@ seaborn
 folium
 psycopg2-binary
 bcrypt
+openpyxl
+psycopg2
