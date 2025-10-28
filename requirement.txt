@@ -1,5 +1,5 @@
 streamlit
-streamlit-folium==0.15.0
+streamlit-folium
 pandas
 numpy
 geopandas
@@ -7,6 +7,6 @@ scikit-learn
 matplotlib
 seaborn
 folium
-psycopg2-binary==2.9.9
+psycopg2
 bcrypt
 openpyxl
