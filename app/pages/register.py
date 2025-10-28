@@ -4,10 +4,7 @@ import time
 from utils.db import get_conn
 from utils.auth_utils import hash_password, generate_otp
 from utils.email_utils import send_verification_email
-import inspect
-from utils import email_utils
 import os
-
 
 # === Konfigurasi Halaman ===
 st.set_page_config(page_title="Registrasi", layout="centered")
@@ -45,20 +42,31 @@ if st.button("Kirim Kode Verifikasi"):
     elif not is_strong_password(password):
         st.warning("⚠️ Password minimal 8 karakter dan harus mengandung huruf serta angka!")
     else:
-        otp = generate_otp()
         try:
-            send_verification_email(email, otp)
-            st.session_state.pending_user = {
-                "username": username,
-                "email": email,
-                "password": password,
-                "otp": otp
-            }
-            st.success("✅ Kode verifikasi telah dikirim ke email kamu!")
-            time.sleep(1)
-            st.switch_page("pages/verify_email.py")
+            conn = get_conn()
+            with conn:
+                with conn.cursor() as cur:
+                    # 🔍 Cek apakah email sudah ada
+                    cur.execute("SELECT 1 FROM Pengguna WHERE email = %s;", (email,))
+                    existing = cur.fetchone()
+
+                    if existing:
+                        st.error("❌ Email ini sudah terdaftar. Gunakan email lain atau lakukan login.")
+                    else:
+                        otp = generate_otp()
+                        send_verification_email(email, otp)
+                        st.session_state.pending_user = {
+                            "username": username,
+                            "email": email,
+                            "password": password,
+                            "otp": otp
+                        }
+                        st.success("✅ Kode verifikasi telah dikirim ke email kamu!")
+                        time.sleep(1)
+                        st.switch_page("pages/verify_email.py")
+
         except Exception as e:
-            st.error(f"❌ Gagal mengirim email: {e}")
+            st.error(f"❌ Terjadi kesalahan: {e}")
 
 # === Tombol Kembali ===
 st.write("---")
