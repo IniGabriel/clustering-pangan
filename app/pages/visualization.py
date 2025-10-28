@@ -29,9 +29,9 @@ st.set_page_config(
 )
 current_dir = os.path.dirname(__file__)
 css_path = os.path.join(current_dir, "..", "styles.css")
+
 with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
 from session import init_session
 init_session()
 logged_in = st.session_state.get("logged_in", False)
@@ -113,10 +113,14 @@ if tampilkan and not invalid:
     with st.spinner("⏳ Sedang memproses data..."):
             kolom_fitur = get_kolom_fitur(indikator, tahun, tahun)  
             color_map = get_color(jumlah_cluster)
-            hasil_kmeans_path = f"../Dataset/model/summary/hasil_kmeans_all_all.pkl"
-            hasil_ahc_path = f"../Dataset/model/summary/hasil_ahc_all_all.pkl"
-            hasil_sb_path = f"../Dataset/model/summary/hasil_sb_all_all.pkl"
-            scaler_path = f"../Dataset/model/scaler.pkl"   
+            # hasil_kmeans_path = f"../Dataset/model/summary/hasil_kmeans_all_all.pkl"
+            # hasil_ahc_path = f"../Dataset/model/summary/hasil_ahc_all_all.pkl"
+            # hasil_sb_path = f"../Dataset/model/summary/hasil_sb_all_all.pkl"
+            # scaler_path = f"../Dataset/model/scaler.pkl"   
+            hasil_kmeans_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_kmeans_all_all.pkl")
+            hasil_ahc_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_ahc_all_all.pkl")
+            hasil_sb_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_sb_all_all.pkl")
+            scaler_path = os.path.join(current_dir,"..","..","Dataset","model","scaler.pkl")  
 
             with open(scaler_path, "rb") as f:
                 scaler = pickle.load(f)
@@ -648,60 +652,62 @@ if tampilkan and not invalid:
                 plt.tight_layout()
                 st.pyplot(plt)
                 plt.close()
-            if algoritma == "Agglomerative (AHC)":
-# --- Pastikan index sinkron ---
-                datanum = df_scaled.copy()
-                datanum = datanum.drop_duplicates(keep='first', inplace= True)
+#             if algoritma == "Agglomerative (AHC)":
 
-                # datanum = df_scaled.select_dtypes(include=[np.number])
-                # --- 2️⃣ Hitung linkage untuk dendrogram ---
-                linked = linkage(datanum, method="ward")
+# # --- Pastikan index sinkron ---
+#                 datanum = df_scaled.copy()
+#                 datanum = datanum.drop_duplicates(keep='first', inplace= True)
 
-                # --- 3️⃣ Buat dendrogram interaktif dengan label ---
-                fig = ff.create_dendrogram(
-                    linked,
-                    orientation="bottom",
-                    labels=data_peta["alt_name"],         
-                    color_threshold=0
-                )
+#                 # datanum = df_scaled.select_dtypes(include=[np.number])
+#                 # --- 2️⃣ Hitung linkage untuk dendrogram ---
+#                 linked = linkage(datanum, method="ward")
 
-                # --- 4️⃣ Atur tampilan dan interaksi ---
-                fig.update_layout(
-                    width=1200,
-                    height=700,
-                    showlegend=False,
-                    template="plotly_white",
-                    title={
-                        "text": f"🧬 Dendrogram AHC (Cluster = {jumlah_cluster})",
-                        "x": 0.5,
-                        "xanchor": "center",
-                        "yanchor": "top"
-                    },
-                    xaxis=dict(
-                        tickangle=45,
-                        tickfont=dict(size=9),
-                    )
-                )
+#                 # --- 3️⃣ Buat dendrogram interaktif dengan label ---
+#                 fig = ff.create_dendrogram(
+#                     linked,
+#                     orientation="bottom",
+#                     labels=data_peta["alt_name"],         
+#                     color_threshold=0
+#                 )
 
-                    # --- 5️⃣ (Opsional) Tambahkan garis horizontal sebagai batas cluster ---
-                import plotly.graph_objects as go
-                from scipy.cluster.hierarchy import fcluster
+#                 # --- 4️⃣ Atur tampilan dan interaksi ---
+#                 fig.update_layout(
+#                     width=1200,
+#                     height=700,
+#                     showlegend=False,
+#                     template="plotly_white",
+#                     title={
+#                         "text": f"🧬 Dendrogram AHC (Cluster = {jumlah_cluster})",
+#                         "x": 0.5,
+#                         "xanchor": "center",
+#                         "yanchor": "top"
+#                     },
+#                     xaxis=dict(
+#                         tickangle=45,
+#                         tickfont=dict(size=9),
+#                     )
+#                 )
 
-                # Tentukan threshold berdasarkan jumlah cluster
-                cluster_labels = fcluster(linked, jumlah_cluster, criterion="maxclust")
-                # Ambil tinggi pemotongan (optional untuk tampilan)
-                threshold = sorted(linked[:, 2], reverse=True)[jumlah_cluster - 1]
-                fig.add_shape(
-                    type="line",
-                    x0=-0.5,
-                    x1=len()-0.5,
-                    y0=threshold,
-                    y1=threshold,
-                    line=dict(color="red", width=2, dash="dash"),
-                )
+#                     # --- 5️⃣ (Opsional) Tambahkan garis horizontal sebagai batas cluster ---
+#                 import plotly.graph_objects as go
+#                 from scipy.cluster.hierarchy import fcluster
 
-                # --- 6️⃣ Tampilkan ke Streamlit ---
-                st.plotly_chart(fig, use_container_width=True)
+#                 # Tentukan threshold berdasarkan jumlah cluster
+#                 cluster_labels = fcluster(linked, jumlah_cluster, criterion="maxclust")
+#                 # Ambil tinggi pemotongan (optional untuk tampilan)
+#                 threshold = sorted(linked[:, 2], reverse=True)[jumlah_cluster - 1]
+#                 fig.add_shape(
+#                     type="line",
+#                     x0=-0.5,
+#                     x1=len()-0.5,
+#                     y0=threshold,
+#                     y1=threshold,
+#                     line=dict(color="red", width=2, dash="dash"),
+#                 )
+
+#                 # --- 6️⃣ Tampilkan ke Streamlit ---
+#                 st.plotly_chart(fig, use_container_width=True)
+    
     status_placeholder.success("✅ Data berhasil diproses!")
 
 # --- Tombol Kembali ---

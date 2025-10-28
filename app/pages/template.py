@@ -96,11 +96,14 @@ st.markdown("### 🌍 Template 3 & 4 — Struktur Untuk Visualisasi Peta (Kabupa
 col3, col4 = st.columns(2)
 
 # ---------------------- Template 3 ----------------------
+css_path = os.path.join(current_dir, "..", "styles.css")
 with col3:
     st.subheader("🌐 Template 3 — Kabupaten/Kota (Tanpa Tahun)")
     st.caption("Struktur umum kabupaten/kota tanpa tahun, fitur hingga **Fitur_n**.")
 
-    df_3= pd.read_excel("..\\Dataset\\template\\template3.xlsx")
+    # df_3= pd.read_excel("..\\Dataset\\template\\template3.xlsx")
+    df_3_path = os.path.join(current_dir, "..","..","Dataset","template", "template3.xlsx")
+    df_3= pd.read_excel(df_3_path)
     st.dataframe(df_3, use_container_width=True)
     st.download_button(
         label="🌍 Unduh Template 3",
@@ -115,7 +118,9 @@ with col4:
     st.subheader("🗺️ Template 4 — Kabupaten/Kota + Tahun")
     st.caption("Gabungan kabupaten/kota dan fitur tahunan hingga **Fitur_n_tahun**.")
 
-    df_4= pd.read_excel("..\\Dataset\\template\\template4.xlsx")
+    # df_4= pd.read_excel("..\\Dataset\\template\\template4.xlsx")
+    df_4_path = os.path.join(current_dir, "..","..","Dataset","template", "template4.xlsx")
+    df_4= pd.read_excel(df_4_path)    
     st.dataframe(df_4, use_container_width=True)
     st.download_button(
         label="🧭 Unduh Template 4",

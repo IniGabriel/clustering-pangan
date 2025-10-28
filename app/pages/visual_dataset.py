@@ -179,7 +179,9 @@ if st.button("📊 Tampilkan Visualisasi"):
             data_peta = None
             if "kab_kota" in df_model.columns:
                 try:
-                    df_geom = gpd.read_file("../Dataset/template/template.geojson")
+                    # df_geom = gpd.read_file("../Dataset/template/template.geojson")
+                    df_geom_path = os.path.join(current_dir,"..","..","Dataset","template","template.geojson")          
+                    df_geom = gpd.read_file(df_geom_path)                           
                     df_geom["kab_kota"] = df_geom["kab_kota"].str.lower().str.strip()
                     df_model["kab_kota"] = df_model["kab_kota"].str.lower().str.strip()
 

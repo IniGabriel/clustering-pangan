@@ -298,10 +298,12 @@ if logged_in:
         # 4️⃣ Kalau berhasil validasi
         else:
             color_map = get_color(jumlah_cluster)
-            hasil_kmeans_path = f"../Dataset/model/summary/hasil_kmeans_all_all.pkl"
-            hasil_ahc_path = f"../Dataset/model/summary/hasil_ahc_all_all.pkl"
-            hasil_sb_path = f"../Dataset/model/summary/hasil_sb_all_all.pkl"
-
+            # hasil_kmeans_path = f"../Dataset/model/summary/hasil_kmeans_all_all.pkl"
+            # hasil_ahc_path = f"../Dataset/model/summary/hasil_ahc_all_all.pkl"
+            # hasil_sb_path = f"../Dataset/model/summary/hasil_sb_all_all.pkl"
+            hasil_kmeans_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_kmeans_all_all.pkl")
+            hasil_ahc_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_ahc_all_all.pkl")
+            hasil_sb_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_sb_all_all.pkl")
             kolom_fitur = [col for col in df.columns if col not in ["Label", "kab_kota"]]
 
             scaler = minmax()

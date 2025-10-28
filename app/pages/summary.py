@@ -62,12 +62,15 @@ pilihan = st.multiselect(
     help="Kamu bisa memilih 1–3 algoritma."
 )
 
-# Peta file (path relatif aman dari lokasi file ini)
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 file_map = {
-    "K-Means": os.path.join(BASE_DIR, "summary", "kmeans", "kmeans.xlsx"),
-    "Agglomerative (AHC)": os.path.join(BASE_DIR, "summary","ahc", "ahc.xlsx"),
-    "Spectral Bridges": os.path.join(BASE_DIR, "summary","sb", "sb.xlsx"),
+    # "K-Means": os.path.join(BASE_DIR, "summary", "kmeans", "kmeans.xlsx"),
+    # "Agglomerative (AHC)": os.path.join(BASE_DIR, "summary","ahc", "ahc.xlsx"),
+    # "Spectral Bridges": os.path.join(BASE_DIR, "summary","sb", "sb.xlsx"),
+    "K-Means": os.path.join(current_dir, "..","summary","kmeans", "kmeans.xlsx"),
+    "Agglomerative (AHC)": os.path.join(current_dir, "..","summary","ahc", "ahc.xlsx"),
+    "Spectral Bridges": os.path.join(current_dir, "..","summary","sb", "sb.xlsx")
 }
 
 # Helper: cari nama kolom silhouette yang valid
