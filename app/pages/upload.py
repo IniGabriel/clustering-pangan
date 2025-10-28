@@ -112,6 +112,7 @@ if logged_in:
                 st.error("⚠️ Harap isi path lengkap lokasi penyimpanan terlebih dahulu.")
                 st.session_state.show_uploader = False
             elif not os.path.isabs(folder_input):
+                st.write(folder_input)
                 st.error("❌ Path tidak valid. Harap masukkan path lengkap (absolute path) tanpa tanda kutip.")
                 st.session_state.show_uploader = False
             elif not os.path.exists(folder_input):
