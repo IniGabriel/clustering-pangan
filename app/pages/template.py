@@ -50,7 +50,6 @@ with col1:
     st.caption("Struktur dasar: hanya label dan fitur hingga **Fitur_n**.")
 
     df_1 = pd.DataFrame({
-        "Label": ["Label1","Label2","Label3"],
         "Fitur1": [0.0, 0.0, 0.0],
         "Fitur2": [0.0, 0.0, 0.0],
         "...": ["...", "...", "..."],
@@ -72,7 +71,6 @@ with col2:
     st.caption("Struktur label + fitur per tahun hingga **Fitur_n_tahun**.")
 
     df_2 = pd.DataFrame({
-        "Label": ["Label1","Label2",'Label3'],
         "Fitur1_2021": [0.0, 0.0, 0.0],
         "Fitur2_2021": [0.0, 0.0, 0.0],
         "Fiturn_2021": [0.0, 0.0, 0.0],

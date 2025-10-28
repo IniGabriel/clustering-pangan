@@ -374,7 +374,7 @@ if tampilkan and not invalid:
             st_folium(m, width=1200, height=700, returned_objects=[])
             
             if kmeans_result is not None:
-                st.markdown("### 📊 Evaluasi Model K-Means")
+                st.markdown("### 📊 Nilai Metrik Evaluasi")
                 colm1, colm2 = st.columns(2)
                 with colm1:
                     st.metric("Silhouette Coefficient", f"{kmeans_result['silhouette_avg']:.4f}")

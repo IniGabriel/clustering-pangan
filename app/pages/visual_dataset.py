@@ -137,7 +137,7 @@ if st.button("📊 Tampilkan Visualisasi"):
                 df_pivot = df_model.copy()
 
                 # Hilangkan kolom non-fitur sebelum korelasi
-                drop_cols = [c for c in ["Cluster", "Silhouette", "Label", "kab_kota"] if c in df_pivot.columns]
+                drop_cols = [c for c in ["Cluster", "Silhouette", "data_id", "kab_kota"] if c in df_pivot.columns]
                 df_pivot = df_pivot.drop(columns=drop_cols, errors="ignore")
 
                 # Ambil hanya kolom numerik
@@ -165,7 +165,7 @@ if st.button("📊 Tampilkan Visualisasi"):
                 df_pivot = df_avg.pivot(index="kab_kota", columns="Fitur", values="Nilai").reset_index()
 
                 # Hapus kolom non-fitur kalau ada
-                drop_cols = [c for c in ["Cluster", "Silhouette", "Label"] if c in df_pivot.columns]
+                drop_cols = [c for c in ["Cluster", "Silhouette", "data_id"] if c in df_pivot.columns]
                 df_pivot = df_pivot.drop(columns=drop_cols, errors="ignore")
 
                 # Ambil hanya kolom numerik
@@ -417,7 +417,6 @@ if st.button("📊 Tampilkan Visualisasi"):
 
  # === Pastikan fitur tersedia ===
         fitur_tersedia = sorted(df_long["Fitur"].dropna().unique().tolist())
-
         if len(fitur_tersedia) < 2:
             pass
         else:
@@ -432,7 +431,7 @@ if st.button("📊 Tampilkan Visualisasi"):
 
             else:
                 df_scatter = df_long.pivot_table(
-                    index=["Label", "Cluster"],
+                    index=["data_id","Cluster"],
                     columns="Fitur",
                     values="Nilai",
                     aggfunc="mean"

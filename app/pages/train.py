@@ -8,11 +8,13 @@ from sklearn.preprocessing import MinMaxScaler as minmax
 import numpy as np 
 import re
 from utils.db import get_conn
+
 st.set_page_config(
     page_title="⚙️ Proses Data",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 # === 0️⃣ Inisialisasi sesi ===
 init_session()
 logged_in = st.session_state.get("logged_in", False)
@@ -27,80 +29,71 @@ with open(css_path) as f:
 
 
 
-
-
-# === 3️⃣ Fungsi Validasi Dataset ===
+# === 3️⃣ Fungsi Validasi Dataset (revisi sesuai permintaan) ===
 def validasi_dataset(file_path):
     # === 1️⃣ Baca file sesuai tipe ===
     try:
         if file_path.endswith(".csv"):
             df = pd.read_csv(file_path)
-
         elif file_path.endswith((".xlsx", ".xls")):
             xls = pd.ExcelFile(file_path)
             if "Sheet1" not in xls.sheet_names:
                 st.warning("❌ Sheet tidak bernama 'Sheet1'. Pastikan sheet utama bernama 'Sheet1'.")
-                return None, False
+                return None, False, None
             df = pd.read_excel(file_path, sheet_name="Sheet1")
-
         elif file_path.endswith(".geojson"):
             df = gpd.read_file(file_path)
-
         else:
             st.warning("❌ Format file tidak dikenali. Hanya mendukung .csv, .xlsx, dan .geojson.")
             st.stop()
-            return None, False
-
+            return None, False, None
     except Exception as e:
         st.warning(f"❌ Gagal membaca file: {e}")
-        return None, False
+        return None, False, None
 
-    # === 2️⃣ Kolom wajib minimal salah satu ===
-    has_label = "Label" in df.columns
-    has_kabkota = "kab_kota" in df.columns
+    # === 2️⃣ Kolom identitas opsional ===
+    label_col = None
+    for kandidat in ["Label", "kab_kota", "nama", "wilayah"]:
+        if kandidat in df.columns:
+            label_col = kandidat
+            break
 
-    if not has_label and not has_kabkota:
-        st.warning("❌ Tidak ditemukan kolom 'Label' maupun 'kab_kota'. Minimal salah satu harus ada.")
-        st.stop()
-        return None, False
-    elif has_label and has_kabkota:
-        pass
-    elif has_label:
-        label=True
-    elif has_kabkota:
-        label=False
-
-    # === 3️⃣ Tidak boleh ada duplikat / missing ===
+    # === 3️⃣ Validasi duplikat & missing
     if df.duplicated().any():
-        st.warning("⚠️ Dataset mengandung baris duplikat. Harap bersihkan data terlebih dahulu, lalu unggah dataset kembali!.")
+        st.warning("⚠️ Dataset mengandung baris duplikat. Harap bersihkan data terlebih dahulu.")
         st.stop()
-        return None, False
+        return None, False, None
 
     if df.isnull().any().any():
-        st.warning("⚠️ Dataset mengandung missing values. Harap isi atau hapus nilai kosong, lalu unggah dataset kembali!.")
+        st.warning("⚠️ Dataset mengandung missing values. Harap isi atau hapus nilai kosong.")
         st.stop()
-        return None, False
-    base_names = [re.sub(r'\.\d+$', '', c) for c in df.columns]  # hapus .1, .2, dst.
-    duplicate_cols = [col for col in set(base_names) if base_names.count(col) > 1]    
-    if duplicate_cols:
-        st.warning("⚠️ Dataset memiliki kolom fitur yang duplikat. Silahkan ubah nama kolom, lalu unggah data kembali!")
-        st.stop()
-    # === 5️⃣ Kolom tahun (Fitur_202x)
-    fitur_tahun = [col for col in df.columns if "_202" in col]
-    if fitur_tahun:
-        pass
-    else:
-        pass
+        return None, False, None
 
-    # === 6️⃣ Tampilkan ringkasan ===
+    # === 4️⃣ Pastikan ada fitur numerik
+    fitur_numerik = df.select_dtypes(include=["number"]).columns.tolist()
+    if len(fitur_numerik) == 0:
+        st.warning("❌ Dataset tidak memiliki fitur numerik untuk dilakukan clustering.")
+        st.stop()
+        return None, False, None
+
+    # === 5️⃣ Deteksi kolom duplikat
+    base_names = [re.sub(r'\.\d+$', '', c) for c in df.columns]
+    duplicate_cols = [col for col in set(base_names) if base_names.count(col) > 1]
+    if duplicate_cols:
+        st.warning(f"⚠️ Dataset memiliki kolom duplikat: {duplicate_cols}. Harap ubah nama kolomnya.")
+        st.stop()
+        return None, False, None
+
+    # === 6️⃣ Tampilkan ringkasan
     st.write("### 📊 Ringkasan Dataset")
     st.dataframe(df.head(), use_container_width=True)
     st.caption(f"Jumlah baris: {len(df)} | Jumlah kolom: {len(df.columns)}")
 
-    return df, True, label
+    return df, True, label_col
 
 
-#     return df_long
+
+# === 4️⃣ Fungsi Data Long ===
 def data_long(df):
     """
     Mengubah dataset ke format long agar bisa divisualisasikan.
@@ -117,66 +110,47 @@ def data_long(df):
     df = df.copy()
 
     try:
-        # --- 1️⃣ Deteksi apakah ada kolom tahun (misal IKP_2021, PPH_2022)
         kolom_tahun = [col for col in df.columns if "_202" in col]
 
         if kolom_tahun:
-            # === TEMPLATE 2: Dataset dengan kolom tahun ===
             kolom_id = [col for col in df.columns if col not in kolom_tahun]
-
-            # Pastikan kolom penting tidak ikut dilelehkan
-            for penting in ["Label", "Cluster", "Silhouette"]:
+            for penting in ["data_id", "Cluster", "Silhouette"]:
                 if penting in df.columns and penting not in kolom_id:
                     kolom_id.append(penting)
 
-            # --- Melt ke format long ---
             df_long = df.melt(
                 id_vars=kolom_id,
                 value_vars=kolom_tahun,
                 var_name="Fitur_Tahun",
                 value_name="Nilai"
             )
-
-            # --- Pisahkan nama fitur & tahun ---
             df_long[["Fitur", "Tahun"]] = df_long["Fitur_Tahun"].str.split("_", expand=True)
             df_long.drop(columns="Fitur_Tahun", inplace=True)
-
         else:
-            # === TEMPLATE 1: Dataset tanpa kolom tahun ===
             kolom_fitur = df.select_dtypes(include=["number"]).columns.tolist()
             kolom_id = [c for c in df.columns if c not in kolom_fitur]
-
-            # Pastikan kolom penting tidak ikut dilelehkan
-            for penting in ["Label", "Cluster", "Silhouette"]:
+            for penting in ["data_id", "Cluster", "Silhouette"]:
                 if penting in df.columns and penting not in kolom_id:
                     kolom_id.append(penting)
-
-            # --- Melt ke format long ---
             df_long = df.melt(
-                id_vars=kolom_id,
+                id_vars=kolom_id if len(kolom_id) > 0 else None,
                 value_vars=kolom_fitur,
                 var_name="Fitur",
                 value_name="Nilai"
             )
-
-            # --- Tambahkan kolom Tahun kosong agar format tetap konsisten ---
             df_long["Tahun"] = None
 
-        # --- 2️⃣ Pastikan kolom utama tersusun rapi ---
         if "kab_kota" in df_long.columns:
             kolom_utama = ["kab_kota", "Fitur", "Tahun", "Nilai"]
-        elif "Label" in df_long.columns:
-            kolom_utama = ["Label", "Fitur", "Tahun", "Nilai"]
+        elif "data_id" in df_long.columns:
+            kolom_utama = ["data_id", "Fitur", "Tahun", "Nilai"]
         else:
-            raise ValueError("❌ Kolom utama 'kab_kota' atau 'Label' tidak ditemukan.")
+            kolom_utama = ["Fitur", "Tahun", "Nilai"]
 
-        kolom_tambahan = [c for c in ["Cluster", "Silhouette", "Label"] if c in df_long.columns]
+        kolom_tambahan = [c for c in ["Cluster", "Silhouette", "data_id"] if c in df_long.columns]
         kolom_final = kolom_utama + [c for c in kolom_tambahan if c not in kolom_utama]
 
-        # --- 3️⃣ Susun urutan kolom ---
         df_long = df_long[kolom_final]
-
-        # --- 4️⃣ Pastikan Cluster tetap ada jika hilang saat melt ---
         if "Cluster" not in df_long.columns and "Cluster" in df.columns:
             df_long["Cluster"] = df["Cluster"].iloc[0] if len(df) > 0 else np.nan
 
@@ -186,79 +160,48 @@ def data_long(df):
     return df_long
 
 
+
+# === 5️⃣ Fungsi Data Wide ===
 def data_wide(df_long):
     """
     Ubah dari format long (kab_kota | Fitur | Tahun | Nilai)
     kembali ke format wide (fitur_tahun jadi kolom)
     """
     df = df_long.copy()
+    wajib = ["Fitur", "Tahun", "Nilai"]
 
-    wajib = ["kab_kota", "Fitur", "Tahun", "Nilai"]
-    if not all(c in df.columns for c in wajib):
-        raise ValueError("❌ Kolom wajib belum lengkap (kab_kota, Fitur, Tahun, Nilai).")
+    for w in wajib:
+        if w not in df.columns:
+            raise ValueError(f"❌ Kolom wajib '{w}' tidak ditemukan di dataset long.")
 
-    # --- 1️⃣ Gabungkan Fitur_Tahun ---
+    if "kab_kota" in df.columns:
+        index_col = "kab_kota"
+    elif "Label" in df.columns:
+        index_col = "Label"
+    else:
+        index_col = None
+
     df["Fitur_Tahun"] = df["Fitur"].astype(str) + "_" + df["Tahun"].astype(str)
+    if index_col:
+        df_wide = df.pivot_table(index=index_col, columns="Fitur_Tahun", values="Nilai", aggfunc="first").reset_index()
+    else:
+        df_wide = df.pivot_table(columns="Fitur_Tahun", values="Nilai", aggfunc="first").reset_index()
 
-    # --- 2️⃣ Pivot tabel ke wide ---
-    df_wide = df.pivot_table(
-        index="kab_kota",
-        columns="Fitur_Tahun",
-        values="Nilai",
-        aggfunc="first"
-    ).reset_index()
-
-    # --- 3️⃣ Tambahkan kolom cluster/label kalau ada ---
     for col in ["Cluster", "Silhouette", "Label"]:
-        if col in df.columns:
-            nilai_unik = df.groupby("kab_kota")[col].first().reset_index()
-            df_wide = df_wide.merge(nilai_unik, on="kab_kota", how="left")
+        if col in df.columns and index_col:
+            nilai_unik = df.groupby(index_col)[col].first().reset_index()
+            df_wide = df_wide.merge(nilai_unik, on=index_col, how="left")
 
     df_wide.columns.name = None
     df_wide = df_wide.sort_index(axis=1)
-
     return df_wide
-    """
-    Mengubah data long (kolom: kab_kota, Fitur, Tahun, Nilai) 
-    menjadi format wide (misal kolom: PPH_2021, IKP_2022, ...)
 
-    Output kolom: kab_kota, [fitur_tahun...], [Cluster], [Label]
-    """
-    df = df_long.copy()
 
-    # --- 1️⃣ Pastikan kolom wajib ada ---
-    wajib = ["kab_kota", "Fitur", "Tahun", "Nilai"]
-    if not all(k in df.columns for k in wajib):
-        raise ValueError("❌ Data long harus memiliki kolom: kab_kota, Fitur, Tahun, Nilai")
 
-    # --- 2️⃣ Buat kolom gabungan Fitur_Tahun ---
-    df["Fitur_Tahun"] = df["Fitur"].astype(str) + "_" + df["Tahun"].astype(str)
-
-    # --- 3️⃣ Pivot: baris = kab_kota, kolom = Fitur_Tahun, nilai = Nilai ---
-    df_wide = df.pivot_table(
-        index="kab_kota",
-        columns="Fitur_Tahun",
-        values="Nilai",
-        aggfunc="first"  # hindari duplikasi
-    ).reset_index()
-
-    # --- 4️⃣ Bawa kembali kolom Cluster/Label kalau ada ---
-    for tambahan in ["Cluster", "Label"]:
-        if tambahan in df.columns:
-            nilai_unik = df.groupby("kab_kota")[tambahan].first().reset_index()
-            df_wide = df_wide.merge(nilai_unik, on="kab_kota", how="left")
-
-    # --- 5️⃣ Rapikan nama kolom ---
-    df_wide.columns.name = None
-    df_wide = df_wide.sort_index(axis=1)
-
-    return df_wide
-# === 4️⃣ Halaman utama ===
+# === 6️⃣ Halaman utama ===
 if logged_in:
     conn = get_conn()
     cur = conn.cursor()
-
-    # Ambil user_id berdasarkan email
     cur.execute("SELECT user_id FROM Pengguna WHERE email = %s;", (email,))
     user_row = cur.fetchone()
     if not user_row:
@@ -283,7 +226,6 @@ if logged_in:
     template_1_2 = None
 
     if tampilkan:
-        # 1️⃣ Pastikan file ada
         if not os.path.exists(selected_dataset):
             st.error(f"⚠️ File dataset tidak ditemukan di lokasi:\n`{selected_dataset}`")
             st.info("Silakan upload ulang dataset tersebut di halaman 'Upload Dataset'.")
@@ -291,67 +233,64 @@ if logged_in:
             conn.commit()
             st.stop()
 
-        # 2️⃣ Jalankan validasi
         status_placeholder = st.empty()
         with st.spinner("⏳ Sedang melatih data..."):
-            df, valid, label = validasi_dataset(selected_dataset)
-        # 3️⃣ Kalau gagal validasi
+            df, valid, label_col = validasi_dataset(selected_dataset)
         if not valid:
             status_placeholder.error("❌ Gagal melatih data. Silahkan periksa kembali dan upload ulang.")
             st.stop()
 
-        # 4️⃣ Kalau berhasil validasi
         else:
             color_map = get_color(jumlah_cluster)
-            # hasil_kmeans_path = f"../Dataset/model/summary/hasil_kmeans_all_all.pkl"
-            # hasil_ahc_path = f"../Dataset/model/summary/hasil_ahc_all_all.pkl"
-            # hasil_sb_path = f"../Dataset/model/summary/hasil_sb_all_all.pkl"
             hasil_kmeans_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_kmeans_all_all.pkl")
             hasil_ahc_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_ahc_all_all.pkl")
             hasil_sb_path = os.path.join(current_dir,"..","..","Dataset","model","summary","hasil_sb_all_all.pkl")
-            kolom_fitur = [col for col in df.columns if col not in ["Label", "kab_kota"]]
+
+            if label_col:
+                kolom_fitur = [col for col in df.columns if col != label_col]
+            else:
+                kolom_fitur = df.select_dtypes(include=["number"]).columns.tolist()
 
             scaler = minmax()
             df_scaled = pd.DataFrame(scaler.fit_transform(df[kolom_fitur]), columns=kolom_fitur)
 
-
             if algoritma == "K-Means":
-                model,df_model = train_kmeans(
-                    data_scaled = df_scaled,
-                    hasil_kmeans_path=hasil_kmeans_path,  
-                    jumlah_cluster=jumlah_cluster,    
-                    data_inverse= df,    
+                model, df_model = train_kmeans(
+                    data_scaled=df_scaled,
+                    hasil_kmeans_path=hasil_kmeans_path,
+                    jumlah_cluster=jumlah_cluster,
+                    data_inverse=df,
                     kolom_fitur=kolom_fitur
                 )
-                table_name="model_kmeans"
-            if algoritma == "AHC":
-                model,df_model = train_ahc(
-                    data_scaled = df_scaled,
-                    hasil_ahc_path=hasil_ahc_path,  
-                    jumlah_cluster=jumlah_cluster,    
-                    data_inverse= df,    
+                table_name = "model_kmeans"
+            elif algoritma == "AHC":
+                model, df_model = train_ahc(
+                    data_scaled=df_scaled,
+                    hasil_ahc_path=hasil_ahc_path,
+                    jumlah_cluster=jumlah_cluster,
+                    data_inverse=df,
                     kolom_fitur=kolom_fitur
                 )
-                table_name="model_ahc"
-            if algoritma == "Spectral Bridges":
-                model,df_model = train_sb(
-                    data_scaled = df_scaled,
-                    hasil_sb_path=hasil_sb_path,  
-                    jumlah_cluster=jumlah_cluster,    
-                    data_inverse= df,    
+                table_name = "model_ahc"
+            else:
+                model, df_model = train_sb(
+                    data_scaled=df_scaled,
+                    hasil_sb_path=hasil_sb_path,
+                    jumlah_cluster=jumlah_cluster,
+                    data_inverse=df,
                     kolom_fitur=kolom_fitur
-                )     
-                table_name="model_sb"                
-                
+                )
+                table_name = "model_sb"
+
             df_model_copy = df_model.copy()
             kolom_fitur = [c for c in df.columns if c.lower() not in ["kab_kota","label"]]
             if any("_202" in col for col in df.columns):
-                if all(re.search(r"_20(1|2)[0-9]", col) for col in kolom_fitur): 
+                if all(re.search(r"_20(1|2)[0-9]", col) for col in kolom_fitur):
                     df_long = data_long(df_model_copy)
                 else:
-                    st.warning("Template yang dipilih memiliki format fitur_tahun, namun tidak semua seperti itu. Silahkan perbaiki dan unggah dataset kembali!.")
-                    st.stop()  
-            else: 
+                    st.warning("Template yang dipilih memiliki format fitur_tahun, namun tidak semua seperti itu.")
+                    st.stop()
+            else:
                 df_long = data_long(df_model_copy)
             
             if template_1_2 is not None:
@@ -359,32 +298,22 @@ if logged_in:
             else:
                 df_wide = df_model.copy()
 
-    
             st.write("### 📊 Dataset setelah clustering")            
             st.dataframe(df_model)
 
-
-            # --- Simpan 3 hasil (df_model_copy, df_long, df_wide) ke folder yang sama dengan dataset ---
-           # --- Simpan 3 hasil (df_model_copy, df_long, df_wide) ke folder yang sama dengan dataset ---
+            # simpan hasil dan metadata
             dataset_folder = os.path.dirname(selected_dataset)
-
-            # 🔹 Ambil dataset_id dulu
             cur.execute("""
                 SELECT dataset_id FROM Dataset WHERE user_id = %s AND path_dataset = %s LIMIT 1;
             """, (user_id, selected_dataset))
             row = cur.fetchone()
             dataset_id = row[0] if row else "unknown"
 
-            namamodel1 = "df_model"
-            namamodel2 = "df_long"
-            namamodel3 = "df_wide"
-
-            # 🔹 Tambahkan _dataset{dataset_id} ke nama file
+            namamodel1, namamodel2, namamodel3 = "df_model", "df_long", "df_wide"
             path_df_model = os.path.join(dataset_folder, f"{namamodel1}_{algoritma}_{jumlah_cluster}_dataset{dataset_id}.csv")
             path_df_long  = os.path.join(dataset_folder, f"{namamodel2}_{algoritma}_{jumlah_cluster}_dataset{dataset_id}.csv")
             path_df_wide  = os.path.join(dataset_folder, f"{namamodel3}_{algoritma}_{jumlah_cluster}_dataset{dataset_id}.csv")
 
-            # Simpan sebagai CSV
             try:
                 df_model_copy.to_csv(path_df_model, index=False)
                 df_long.to_csv(path_df_long, index=False)
@@ -393,13 +322,10 @@ if logged_in:
                 st.error(f"❌ Gagal menyimpan hasil CSV: {e}")
                 st.stop()
 
-
-            # --- 7️⃣ Ambil metrik evaluasi dari hasil model ---
             silhouette = float(model.get("silhouette_avg", 0)) if model.get("silhouette_avg") is not None else None
             dbi = float(model.get("dbi", 0)) if model.get("dbi") is not None else None
             waktu = float(model.get("waktu_komputasi", 0)) if model.get("waktu_komputasi") is not None else None
 
-            # --- 8️⃣ Simpan metadata hasil ke database ---
             try:
                 insert_query = f"""
                     INSERT INTO {table_name}
@@ -408,7 +334,6 @@ if logged_in:
                         (SELECT dataset_id FROM Dataset WHERE user_id = %s AND path_dataset = %s LIMIT 1)
                     );
                 """
-
                 check_query = f"""
                     SELECT EXISTS (
                         SELECT 1 FROM {table_name} m
@@ -418,24 +343,17 @@ if logged_in:
                         AND m.nama_model = %s
                     );
                 """
-
                 model_files = [
                     ("df_model", path_df_model),
                     ("df_long", path_df_long),
                     ("df_wide", path_df_wide)
                 ]
-
                 for nama, path_iter in model_files:
                     nama_model_iter = f"{nama}_{algoritma}_{jumlah_cluster}"
-
-                    # 🔍 Cek apakah sudah ada di database
                     cur.execute(check_query, (user_id, selected_dataset, nama_model_iter))
                     sudah_ada = cur.fetchone()[0]
-
                     if sudah_ada:
                         continue
-
-                    # 💾 Insert jika belum ada
                     cur.execute(insert_query, (
                         nama_model_iter,
                         path_iter,
@@ -447,16 +365,13 @@ if logged_in:
                         user_id,
                         selected_dataset
                     ))
-
                 conn.commit()
-
                 cur.execute("""
                     UPDATE Dataset
                     SET sudah_dilatih = TRUE
                     WHERE user_id = %s AND path_dataset = %s;
                 """, (user_id, selected_dataset))
                 conn.commit()
-
             except Exception as e:
                 conn.rollback()
                 st.error(f"❌ Gagal menyimpan metadata model ke database: {e}")

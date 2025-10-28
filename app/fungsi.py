@@ -136,12 +136,14 @@ def train_kmeans(data_scaled, hasil_kmeans_path, jumlah_cluster, data_scaled_nul
         output_filename = f"hasil_kmeans_{jumlah_cluster}_{tahun}_{fitur_str}.xlsx"
 
         # df_result.to_excel(output_filename, index=False)
-
+    # cari kolom identitas yang ada
     if data_scaled_null is None:
             try:
                 data_kmeans_final["kab_kota"] = data_inverse["kab_kota"].values    
             except:
-                data_kmeans_final["Label"] = data_inverse["Label"].values  
+                if not any(col.lower() in ["kab_kota"] for col in data_kmeans_final.columns):
+                    data_kmeans_final.insert(0, "data_id", range(1, len(data_kmeans_final) + 1))
+
     return kmeans_result, data_kmeans_final
 
 def train_ahc(data_scaled, hasil_ahc_path, jumlah_cluster, data_inverse=None, tahun=None,data_scaled_null = None,kolom_fitur=None): 
@@ -202,12 +204,13 @@ def train_ahc(data_scaled, hasil_ahc_path, jumlah_cluster, data_inverse=None, ta
         output_filename = f"hasil_ahc_{jumlah_cluster}_{tahun}_{fitur_str}.xlsx"
 
         # df_result.to_excel(output_filename, index=False)
-    
     if data_scaled_null is None:
             try:
                 data_ahc_final["kab_kota"] = data_inverse["kab_kota"].values    
             except:
-                data_ahc_final["Label"] = data_inverse["Label"].values  
+                if not any(col.lower() in ["kab_kota"] for col in data_ahc_final.columns):
+                    data_ahc_final.insert(0, "data_id", range(1, len(data_ahc_final) + 1))    
+
     return ahc_result, data_ahc_final
 
 def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahun=None, data_scaled_null=None, kolom_fitur=None):
@@ -296,10 +299,11 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
         # df_result.to_excel(output_filename, index=False)
 
     if data_scaled_null is None:
-        try:
-            data_sb_final["kab_kota"] = data_inverse["kab_kota"].values
-        except:
-            data_sb_final["Label"] = data_inverse["Label"].values
+            try:
+                data_sb_final["kab_kota"] = data_inverse["kab_kota"].values    
+            except:
+                if not any(col.lower() in ["kab_kota"] for col in data_sb_final.columns):
+                    data_sb_final.insert(0, "data_id", range(1, len(data_sb_final) + 1))
 
     return sb_result, data_sb_final
 
