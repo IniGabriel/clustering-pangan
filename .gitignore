@@ -1,0 +1,3 @@
+app/.streamlit/secrets.toml
+
+app/__pycache__/

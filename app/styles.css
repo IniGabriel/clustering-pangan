@@ -1,0 +1,97 @@
+[data-testid="stSidebar"] {
+    display: none !important;
+}
+
+/* Navbar */
+.navbar {
+    /* background-color: #f0f2f6; */
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #ddd;
+    position: sticky;                /* biar nempel di atas saat scroll */
+    top: 0;                          /* posisinya di bagian atas halaman */
+    z-index: 1000;                   /* biar gak ketimpa elemen lain */
+    top:3rem;
+}
+.nav-left {
+    display: flex;
+    gap: 100px;
+    align-items: center;
+}
+.nav-right {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+.nav-item {
+    font-weight: 500;
+    text-decoration: none !important;
+    color: #333;
+}
+
+.nav-item,
+.nav-item:visited {
+    font-weight: 500;
+    text-decoration: none !important;
+    color: #2f3542;
+    transition: color 0.2s ease-in-out;
+}
+
+.nav-item:hover {
+    color: #007bff;
+}
+
+.login-btn {
+    background-color: #007bff;
+    color: white !important;
+    padding: 6px 16px;
+    border-radius: 6px;
+    text-decoration: none !important;
+    font-weight: 500;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 123, 255, 0.15);
+    cursor: pointer;
+    display: inline-block;
+}
+
+.login-btn:hover {
+    background-color: #0069d9;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.25);
+}
+
+.login-btn:active {
+    background-color: #0056b3;
+    box-shadow: 0 1px 3px rgba(0, 86, 179, 0.25);
+}
+
+/* Main Content */
+.content {
+    padding: 20px 40px;
+    font-family: "Segoe UI", sans-serif;
+}
+
+.section-box {
+    background-color: #f0f2f6;
+    padding: 15px 18px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+
+.back-home-btn {
+    text-decoration: none !important;
+    background-color: #1E88E5;
+    color: white !important;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px rgba(30, 136, 229, 0.15);
+    cursor: pointer;
+    display: inline-block;
+}
+
