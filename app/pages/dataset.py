@@ -7,11 +7,11 @@ from utils.db import get_conn
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from session import init_session
 
-# === 2️⃣ Load CSS ===
-with open("styles.css") as f:
+current_dir = os.path.dirname(__file__)
+css_path = os.path.join(current_dir, "..", "styles.css")
+with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# === 3️⃣ Load session ===
 init_session()
 logged_in = st.session_state.get("logged_in", False)
 email = st.session_state.get("email", "")

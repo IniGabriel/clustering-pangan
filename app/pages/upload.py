@@ -22,7 +22,9 @@ username = st.session_state.get("username", "")
 email = st.session_state.get("email", "")
 
 # === 3️⃣ Load CSS ===
-with open("styles.css") as f:
+current_dir = os.path.dirname(__file__)
+css_path = os.path.join(current_dir, "..", "styles.css")
+with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 

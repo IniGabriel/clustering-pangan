@@ -1,16 +1,19 @@
 import streamlit as st
 from session import init_session
-with open("styles.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+import os
 from session import init_session
-init_session()
-logged_in = st.session_state.get("logged_in", False)
-username= st.session_state.get("username",False)
 st.set_page_config(
     page_title="About",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+current_dir = os.path.dirname(__file__)
+css_path = os.path.join(current_dir, "..", "styles.css")
+with open(css_path) as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+init_session()
+logged_in = st.session_state.get("logged_in", False)
+username= st.session_state.get("username",False)
 if logged_in:
     cols = st.columns(8)
     with cols[0]:

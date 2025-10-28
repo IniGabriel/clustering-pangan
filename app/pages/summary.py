@@ -9,10 +9,11 @@ st.set_page_config(page_title="Summary", layout="wide")
 # -------------------- SESSION (sesuaikan dengan punyamu) --------------------
 logged_in = st.session_state.get("logged_in", False)
 username = st.session_state.get("username", "User")
-css_path = os.path.join(os.path.dirname(__file__), "../styles.css")
+
+current_dir = os.path.dirname(__file__)
+css_path = os.path.join(current_dir, "..", "styles.css")
 with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
 # -------------------- NAVBAR --------------------
 if logged_in:
     cols = st.columns(7)

@@ -2,7 +2,10 @@ import streamlit as st
 from utils.db import get_conn
 from utils.auth_utils import hash_password, generate_otp
 from utils.email_utils import send_verification_email
-with open("styles.css") as f:
+import os
+current_dir = os.path.dirname(__file__)
+css_path = os.path.join(current_dir, "..", "styles.css")
+with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 st.set_page_config(page_title="Lupa Password", layout="centered")
 st.title("🔁 Lupa Password")

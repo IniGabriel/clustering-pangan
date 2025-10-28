@@ -1,9 +1,5 @@
 import os, sys, pickle
 import streamlit as st
-css_path = os.path.join(os.path.dirname(__file__), "../styles.css")
-with open(css_path) as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from streamlit_folium import st_folium
 import geopandas as gpd
 import seaborn as sns
@@ -24,7 +20,6 @@ import plotly.figure_factory as ff
 from scipy.cluster.hierarchy import linkage
 
 from fungsi import *
-# --- CSS ---
 
 # --- Page Config ---
 st.set_page_config(
@@ -32,6 +27,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+current_dir = os.path.dirname(__file__)
+css_path = os.path.join(current_dir, "..", "styles.css")
+with open(css_path) as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 from session import init_session
 init_session()

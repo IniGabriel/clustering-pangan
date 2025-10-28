@@ -1,0 +1,11 @@
+streamlit
+streamlit-folium
+pandas
+numpy
+geopandas
+scikit-learn
+matplotlib
+seaborn
+folium
+psycopg2-binary
+bcrypt

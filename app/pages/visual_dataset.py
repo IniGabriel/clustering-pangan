@@ -22,8 +22,8 @@ selected_dataset = st.session_state.get("selected_dataset", None)
 
 
 # === 2️⃣ Load CSS ===
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-css_path = os.path.join(os.path.dirname(__file__), "../styles.css")
+current_dir = os.path.dirname(__file__)
+css_path = os.path.join(current_dir, "..", "styles.css")
 with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
