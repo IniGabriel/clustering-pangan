@@ -125,9 +125,11 @@ if tampilkan and not invalid:
             with open(scaler_path, "rb") as f:
                 scaler = pickle.load(f)
 
-            df_scaled_path = "..\Dataset\pre\data_scaled.geojson"
+            # df_scaled_path = "..\Dataset\pre\data_scaled.geojson"
+            df_scaled_path = os.path.join(current_dir,"..","..","Dataset","pre","data_scaled.geojson")  
             df_scaled = gpd.read_file(df_scaled_path)
-            df_scaled_null_path = "..\Dataset\pre\data_scaled_null.geojson"
+            # df_scaled_null_path = "..\Dataset\pre\data_scaled_null.geojson"
+            df_scaled_null_path = os.path.join(current_dir,"..","..","Dataset","pre","data_scaled_null.geojson")  
             df_scaled_null = gpd.read_file(df_scaled_null_path)
             df_inverse= inverse(df_scaled,scaler)
             data_pivot_awal = data_pivot_awal(df_inverse, kolom_fitur)
