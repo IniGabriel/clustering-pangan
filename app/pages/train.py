@@ -300,6 +300,16 @@ if logged_in:
 
             st.write("### 📊 Dataset setelah clustering")            
             st.dataframe(df_model)
+            # === Tombol Unduh Dataset Hasil Klaster ===
+            csv = df_model.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="📥 Unduh Dataset Hasil Klaster",
+                data=csv,
+                file_name=f"hasil_klaster_{algoritma}_{jumlah_cluster}.csv",
+                mime="text/csv",
+                help="Klik untuk mengunduh dataaset hasil clustering"
+            )
+
 
             # simpan hasil dan metadata
             dataset_folder = os.path.dirname(selected_dataset)

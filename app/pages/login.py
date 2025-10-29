@@ -1,7 +1,7 @@
 import streamlit as st
 import time
 from utils.db import get_conn
-from utils.auth_utils import verify_password
+from utils.auth_utils import verify_password,hash_password
 import os
 current_dir = os.path.dirname(__file__)
 css_path = os.path.join(current_dir, "..", "styles.css")
@@ -25,7 +25,21 @@ if st.button("Masuk"):
                     st.session_state.email = email
                     st.success(f"Berhasil login sebagai {user[0]}!")
                     time.sleep(1.2)
-                    st.switch_page("home.py")
+
+                    cur.execute("SELECT user_id FROM Pengguna WHERE email = %s;", ("dummy@email.com",))
+                    dummy_user = cur.fetchone()
+                    if not dummy_user:
+                        dummy_hashed_pw = hash_password("IniDummy123")
+                        cur.execute("""
+                            INSERT INTO Pengguna (username, email, password)
+                            VALUES (%s, %s, %s);
+                        """, ("dummy", "dummy@email.com", dummy_hashed_pw))
+                        conn.commit()
+
+                    if email == "admin@email.com":
+                        st.switch_page("pages/admin.py")
+                    else:
+                        st.switch_page("home.py")
                 else:
                     st.error("Email atau password salah.")
     except Exception as e:

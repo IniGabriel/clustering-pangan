@@ -20,7 +20,7 @@ logged_in = st.session_state.get("logged_in", False)
 email = st.session_state.get("email", "")
 
 # === 4️⃣ Konfigurasi halaman ===
-st.set_page_config(page_title="Data Saya", layout="wide")
+st.set_page_config(page_title="Dataset Saya", layout="wide")
 
 st.session_state.selected_folder = ""
 st.session_state.show_uploader = False

@@ -30,7 +30,7 @@ with open(css_path) as f:
 # === 3️⃣ Konfigurasi Halaman ===
 st.set_page_config(page_title="📊 Visualisasi Dataset", layout="wide")
 
-st.markdown("<h2 style='text-align:center;'>📊 Visualisasi Dataset Terlatih</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align:center;'>📊 Visualisasi Dataset</h2>", unsafe_allow_html=True)
 st.write("---")
 
 if not logged_in:
@@ -77,7 +77,7 @@ if st.button("⬅️ Kembali ke Halaman Sebelumnya"):
     st.switch_page("pages/dataset.py")
 
 # === 6️⃣ Pilihan algoritma dan cluster ===
-algoritma = st.selectbox("Pilih algoritma model:", ["K-Means", "AHC", "Spectral Bridges"])
+algoritma = st.selectbox("Pilih algoritma:", ["K-Means", "AHC", "Spectral Bridges"])
 
 jumlah_cluster = st.slider("Pilih jumlah cluster:", 2, 7, 2, 1)
 if st.button("📊 Tampilkan Visualisasi"):

@@ -10,8 +10,6 @@ SENDER_EMAIL = st.secrets["email"]
 SENDER_PASSWORD = st.secrets["password"]
 
 def send_verification_email(receiver_email, otp):
-    print(f"📤 Mengirim email ke: {receiver_email} ...")
-
     msg = MIMEMultipart()
     msg["From"] = SENDER_EMAIL
     msg["To"] = receiver_email
@@ -27,7 +25,6 @@ def send_verification_email(receiver_email, otp):
             server.set_debuglevel(1)  # tampilkan log detail di terminal
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
             server.send_message(msg)
-        print("✅ Email OTP berhasil dikirim!")
     except Exception as e:
         print(f"❌ Error SMTP: {e}")
         raise e

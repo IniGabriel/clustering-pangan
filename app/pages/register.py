@@ -52,7 +52,7 @@ if st.button("Kirim Kode Verifikasi"):
 
                     if existing:
                         st.error("❌ Email ini sudah terdaftar. Gunakan email lain atau lakukan login.")
-                    else:
+                    else: 
                         otp = generate_otp()
                         send_verification_email(email, otp)
                         st.session_state.pending_user = {
