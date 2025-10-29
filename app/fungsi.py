@@ -211,6 +211,7 @@ def train_ahc(data_scaled, hasil_ahc_path, jumlah_cluster, data_inverse=None, ta
                 if not any(col.lower() in ["kab_kota"] for col in data_ahc_final.columns):
                     data_ahc_final.insert(0, "data_id", range(1, len(data_ahc_final) + 1))    
 
+
     return ahc_result, data_ahc_final
 
 def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahun=None, data_scaled_null=None, kolom_fitur=None):
