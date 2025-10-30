@@ -53,7 +53,6 @@ def inverse(data_scaled,scaler):
             print(f"⚠️ Gagal inverse transform: {e}")
 
 def train_kmeans(data_scaled, hasil_kmeans_path, jumlah_cluster, data_scaled_null = None, data_inverse = None, tahun =None,kolom_fitur=None):
-     # --- 1️⃣ Baca hasil_kmeans.pkl ---
     if not hasil_kmeans_path or not os.path.exists(hasil_kmeans_path):
         st.error(f"❌ File hasil_kmeans.pkl tidak ditemukan di: {hasil_kmeans_path}")
         return None, None
@@ -230,7 +229,6 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
     fallback_states = [random_state_file, 76, 75, 42,2,13,25]
     model_sb, labels_sb = None, None
 
-    # === Coba latih dengan fallback bertahap ===
     for rs in fallback_states:
         try:
             start = time.time()
@@ -282,7 +280,6 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
 
     fitur_unik = sorted(list({c.split("_")[0] for c in kolom_fitur}))
 
-    # === Simpan hasil ringkasan ===
     data_to_save = {
         "Metode": "Spectral Bridges",
         "Jumlah Cluster": jumlah_cluster,
@@ -309,15 +306,8 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
     return sb_result, data_sb_final
 
 def data_pivot_awal(data_asli, kolom_fitur, scaler=None):
-    """
-    Mengubah data mentah (belum diklasterisasi) menjadi format long untuk analisis EDA.
-    - Jika scaler diberikan, akan mengembalikan ke skala asli.
-    - Menghasilkan kolom: kab_kota, Fitur, Tahun, Nilai
-    """
-
     df = data_asli.copy()
 
-    # --- 1️⃣ Kembalikan nilai ke skala asli bila scaler tersedia ---
     if scaler is not None:
         try:
             df[kolom_fitur] = scaler.inverse_transform(df[kolom_fitur])
@@ -325,12 +315,10 @@ def data_pivot_awal(data_asli, kolom_fitur, scaler=None):
         except Exception as e:
             print(f"⚠️ Gagal inverse transform: {e}")
 
-    # --- 2️⃣ Ambil kolom tahun (yang mengandung _202) ---
     kolom_tahun = [col for col in df.columns if "_202" in col]
     if not kolom_tahun:
         raise ValueError("Tidak ditemukan kolom tahun seperti PPH_2021, IKP_2022, dll.")
 
-    # --- 3️⃣ Ubah dari wide ke long ---
     df_long = df.melt(
         id_vars=[col for col in df.columns if col not in kolom_tahun],
         value_vars=kolom_tahun,
@@ -338,37 +326,27 @@ def data_pivot_awal(data_asli, kolom_fitur, scaler=None):
         value_name="Nilai"
     )
 
-    # --- 4️⃣ Pisahkan kolom Fitur_Tahun jadi Fitur dan Tahun ---
     df_long[["Fitur", "Tahun"]] = df_long["Fitur_Tahun"].str.split("_", expand=True)
     df_long.drop(columns="Fitur_Tahun", inplace=True)
 
-    # --- 5️⃣ Pilih kolom utama (tanpa Cluster dan Label) ---
     kolom_final = ["kab_kota", "Fitur", "Tahun", "Nilai"]
     df_long = df_long[[col for col in kolom_final if col in df_long.columns]]
 
-    # --- 6️⃣ Hapus kolom geometry bila ada ---
     if "geometry" in df_long.columns:
         df_long = df_long.drop(columns=["geometry"])
 
-    # --- 7️⃣ Validasi dasar ---
     if df_long["Nilai"].isnull().all():
         print("⚠️ Semua nilai kolom 'Nilai' kosong, periksa data sumber atau scaler.")
     return df_long
 
 def buat_data_boxplot(data_algoritma, kolom_fitur):
-    """
-    Membentuk data dalam format long (melt) untuk visualisasi boxplot.
-    Tidak melakukan inverse scaling — hanya ubah bentuk data.
-    """
     df = data_algoritma.copy()
     df = df.drop_duplicates(subset="geometry",keep='first')          
 
-    # --- 1️⃣ Ambil kolom tahun (yang mengandung _202) ---
     kolom_tahun = [col for col in df.columns if "_202" in col]
     if not kolom_tahun:
         raise ValueError("Tidak ditemukan kolom tahun seperti PPH_2021, IKP_2022, dll.")
 
-    # --- 2️⃣ Ubah dari wide ke long ---
     df_long = df.melt(
         id_vars=[col for col in df.columns if col not in kolom_tahun],
         value_vars=kolom_tahun,
@@ -376,19 +354,15 @@ def buat_data_boxplot(data_algoritma, kolom_fitur):
         value_name="Nilai"
     )
     
-    # --- 3️⃣ Pisahkan kolom Fitur_Tahun jadi Fitur dan Tahun ---
     df_long[["Fitur", "Tahun"]] = df_long["Fitur_Tahun"].str.split("_", expand=True)
     df_long.drop(columns="Fitur_Tahun", inplace=True)
 
-    # --- 4️⃣ Pilih kolom utama yang dibutuhkan ---
     kolom_final = ["kab_kota", "Fitur", "Tahun", "Nilai", "Cluster", "Label"]
     df_long = df_long[[col for col in kolom_final if col in df_long.columns]]
 
-    # --- 5️⃣ Hapus kolom geometry bila ada ---
     if "geometry" in df_long.columns:
         df_long = df_long.drop(columns=["geometry"])
 
-    # --- 6️⃣ Validasi sederhana ---
     if df_long["Nilai"].isnull().all():
         print("⚠️ Semua nilai kolom 'Nilai' kosong, periksa data sumber.")
     print("len df akhir ==== ",len(df_long))
@@ -414,32 +388,30 @@ def tambah_label_cluster(df,jumlah_cluster,mean):
 
     mapping = {cluster_id: label_urutan[i] for i, cluster_id in enumerate(urutan_cluster)}
 
-    # --- Terapkan ke dataframe utama ---
     df["Label"] = df["Cluster"].map(mapping)
 
     df["Label"] = df["Label"].fillna("Undefined")
     return df
 
-# Color Map
 def get_color(jumlah_cluster):
 
     if jumlah_cluster <= 4:
 
         warna_palette = [
-            "#1B5E20",  # 4 Hijau tua (sangat tinggi)
-            "#4CAF50",  # 3 Hijau segar (tinggi)
-            "#F57C00",  # 1 Oranye terang (rendah)
-            "#D32F2F",  # 0 Merah terang (sangat rendah)
+            "#1B5E20",  
+            "#4CAF50", 
+            "#F57C00",  
+            "#D32F2F",  
         ]
     else:
         warna_palette = [
-            "#4CAF50",  # 3 Hijau segar (tinggi)
-            "#1B5E20",  # 4 Hijau tua (sangat tinggi)
-            "#0288D1",  # 5 Biru sedang
-            "#7B1FA2",  # 7 Ungu
-            "#FBC02D",  # 2 Kuning terang (sedang)
-            "#F57C00",  # 1 Oranye terang (rendah)
-            "#D32F2F",  # 0 Merah terang (sangat rendah)
+            "#4CAF50",  
+            "#1B5E20",
+            "#0288D1",
+            "#7B1FA2", 
+            "#FBC02D",  
+            "#F57C00", 
+            "#D32F2F",  
         ]
 
 

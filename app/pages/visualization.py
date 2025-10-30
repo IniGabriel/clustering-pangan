@@ -174,7 +174,6 @@ if tampilkan and not invalid:
 
             col1, col2 = st.columns(2)
             with col1:
-                # --- 1️⃣ Pivot hasil data untuk korelasi ---
                 df_korelasi = data_pivot_awal.pivot_table(
                     index=['kab_kota', 'Tahun'],
                     columns='Fitur',
@@ -182,8 +181,6 @@ if tampilkan and not invalid:
                     aggfunc='mean'
                 ).reset_index()
 
-                # --- 2️⃣ Filter tahun sesuai input user ---
-                # Ambil daftar tahun yang aktif (2021, 2022, dst)
                 if tahun == "Semua Tahun":
                     tahun_dipakai = ['2021', '2022', '2023']
                 elif tahun == "2021–2022":
@@ -195,28 +192,23 @@ if tampilkan and not invalid:
 
                 df_korelasi = df_korelasi[df_korelasi["Tahun"].astype(str).isin(tahun_dipakai)] 
 
-
-                # --- 3️⃣ Tentukan kolom fitur sesuai indikator user ---
                 indikator_semua = ['PPH', 'IKP', 'AKE', 'AKP']
                 if "Semua Indikator" in indikator or len(indikator) == 0:
                     fitur_dipakai = indikator_semua
                 else:
                     fitur_dipakai = indikator
-                # Pastikan hanya kolom yang memang ada di df
+
                 fitur_tersedia = [f for f in fitur_dipakai if f in df_korelasi.columns]
                 
                 if not fitur_tersedia:
                     st.warning("⚠️ Tidak ada kolom indikator yang cocok untuk data ini.")
                 else:
-                    # --- 4️⃣ Normalisasi per tahun (Z-score) ---
                     df_korelasi[fitur_tersedia] = df_korelasi.groupby("Tahun")[fitur_tersedia].transform(
                         lambda x: (x - x.mean()) / x.std(ddof=0)
                     )
 
-                    # --- 5️⃣ Hitung matriks korelasi ---
                     korelasi_kmeans = df_korelasi[fitur_tersedia].corr().round(2)
 
-                    # --- 6️⃣ Plot heatmap ---
                     plt.figure(figsize=(5, 4))
                     sns.heatmap(
                         korelasi_kmeans,
@@ -318,15 +310,6 @@ if tampilkan and not invalid:
             else:
                 print("✅ Tidak ada duplikat geometry.")
 
-            # excel_path = "Plisbiwsa.xlsx"
-            # data_peta.drop(columns='geometry').to_excel(excel_path, index=False)
-            # print(f"✅ File Excel berhasil disimpan ke: {excel_path}")
-
-            # # === 2️⃣ Simpan GeoDataFrame hanya kab_kota dan geometry ===
-            # geo_simplified = data_peta[["kab_kota", "geometry"]]
-            # geojson_path = "Plisbiwsa.geojson"
-            # geo_simplified.to_file(geojson_path, driver="GeoJSON")
-            # print(f"🌍 File GeoJSON berhasil disimpan ke: {geojson_path}")
             m = folium.Map(
                 location=[center_lat, center_lon],
                 zoom_start=5,
@@ -384,26 +367,20 @@ if tampilkan and not invalid:
 #=================================== (4) SILHOUETTE PLOT & BAR PLOT ===================================
             col4,col5=st.columns(2)
             with col4:
-            # Pastikan numeric & bersihkan nilai invalid
                 df_sil = data_peta.copy()
 
-                # 1) Jadikan kolom Silhouette numerik
                 df_sil[kolom_silhouette] = pd.to_numeric(df_sil[kolom_silhouette], errors="coerce")
 
-                # 2) Isi NaN dengan 0.0 (atau kalau mau, bisa dropna)
                 df_sil[kolom_silhouette] = df_sil[kolom_silhouette].fillna(0)
                 df_sil = df_sil.dropna(subset=["Cluster"])
                 df_sil["Cluster"] = df_sil["Cluster"].astype(int)
 
 
-                # 3) (Opsional) kalau ada label yang tidak ada warnanya, filter dulu
                 labels_terpakai = [lbl for lbl in df_sil["Cluster"].unique() if lbl in color_map and lbl != "Undefined"]
-                # 4) Plot
                 fig, ax = plt.subplots(figsize=(8, 6))
                 y_lower = 10
 
                 for i, cluster in enumerate(labels_terpakai):
-                    # ambil & urutkan nilai silhouette cluster tsb sebagai float
                     vals = (
                         df_sil.loc[df_sil["Cluster"] == cluster, kolom_silhouette]
                         .astype(float)
@@ -411,7 +388,6 @@ if tampilkan and not invalid:
                         .to_numpy()
                     )
 
-                    # kalau kosong, lanjutkan
                     if vals.size == 0:
                         continue
 
@@ -426,13 +402,10 @@ if tampilkan and not invalid:
                         edgecolor=color_map[cluster],
                         alpha=0.85
                     )
-                    y_lower = y_upper + 10  # spasi antar cluster
-
-                # Garis rata-rata silhouette keseluruhan
+                    y_lower = y_upper + 10  
                 silhouette_avg = float(df_sil[kolom_silhouette].mean())
                 ax.axvline(x=silhouette_avg, color="darkred", linestyle="--", linewidth=1.5)
 
-                # Legend
                 legend_patches = [mpatches.Patch(color=color_map[lbl], label=lbl) for lbl in labels_terpakai]
                 ax.legend(handles=legend_patches, 
                           title="Cluster",
@@ -443,7 +416,6 @@ if tampilkan and not invalid:
                           fontsize=11, 
                           title_fontsize=11,
                           )
-                # Tampilan
                 ax.set_title("Distribusi Nilai Silhouette per Cluster", fontsize=13)
                 ax.set_xlabel("Nilai Silhouette", fontsize=11)
                 ax.set_ylabel("")
@@ -465,44 +437,39 @@ if tampilkan and not invalid:
                     y="Jumlah",
                     hue=df_counts['Cluster'].astype(int),
                     palette=color_map,
-                    dodge=False,                 # biar warnanya tetap satu per label
-                    legend=True                  # aktifkan legend
+                    dodge=False,           
+                    legend=True                 
                 )
 
-                # --- Tambahkan angka di atas tiap batang ---
                 for i, val in enumerate(cluster_counts.values):
                     plt.text(
                         i,
-                        val + (max(cluster_counts.values) * 0.02),  # 2% di atas bar
+                        val + (max(cluster_counts.values) * 0.02),  
                         f'{val}',
                         ha='center', va='bottom',
                         fontsize=10, fontweight='bold'
                     )
 
-                # --- Tambahkan ruang atas biar tidak mepet ---
-                plt.ylim(0, max(cluster_counts.values) * 1.15)  # +15% ruang
+                plt.ylim(0, max(cluster_counts.values) * 1.15) 
 
-                # --- Label & Judul ---
                 plt.title("Jumlah Anggota Tiap Cluster", fontsize=13, pad=10)
                 plt.xlabel("Cluster", fontsize=11)
                 legend = plt.legend(
-                    title="Cluster",          # judul legend
-                    title_fontsize=10,         # ukuran font judul legend
-                    fontsize=10,               # ukuran font item legend
+                    title="Cluster",          
+                    title_fontsize=10,       
+                    fontsize=10,             
                     frameon=True,
                     ncol=col,
                     loc='upper center',
                     bbox_to_anchor=(0.5, -0.15)
                 )
-                legend.get_title().set_fontweight('bold')  # opsional: judul legend tebal                
+                legend.get_title().set_fontweight('bold')                 
                 plt.ylabel("Jumlah Kabupaten/Kota", fontsize=11)
                 plt.xticks([])                 
-                # --- Tampilan lebih bersih ---
                 sns.despine()
                 plt.grid(axis='y', linestyle='--', alpha=0.4)
                 
 
-                # --- Tampilkan ---
                 plt.tight_layout()      
                 st.pyplot(plt)      
 
@@ -514,22 +481,17 @@ if tampilkan and not invalid:
                 .mean()
             )
 
-
-            # --- Loop tiap cluster
             for c in sorted(df_top["Cluster"].unique()):
                 with st.expander(f"Cluster {int(c)}"):
                     total_fitur = len(fitur_dipakai)
 
-                    # --- Tentukan layout kolom otomatis
                     if total_fitur == 1:
-                        # buat 3 kolom tapi isi di kolom ke-2 biar rapi di tengah
                         fitur_groups = [fitur_dipakai]
                         layout_mode = "single"
                     elif total_fitur == 2:
                         fitur_groups = [fitur_dipakai]
                         layout_mode = "double"
                     elif total_fitur == 3:
-                        # dua di atas, satu di tengah bawah
                         fitur_groups = [fitur_dipakai[:2], [fitur_dipakai[2]]]
                         layout_mode = "triple"
                     elif total_fitur == 4:
@@ -539,7 +501,6 @@ if tampilkan and not invalid:
                         fitur_groups = [fitur_dipakai[i:i+3] for i in range(0, total_fitur, 3)]
                         layout_mode = "multi"
 
-                    # --- Loop tiap grup fitur (per baris)
                     for group in fitur_groups:
                         if layout_mode == "single":
                             cols = st.columns([1, 2, 1])
@@ -597,14 +558,8 @@ if tampilkan and not invalid:
                                 st.pyplot(plt)
                                 plt.close()
 
-
-
-
-
-
 # === (5) SCATTER PLOT PAIR PLOT ===================================
             if len(indikator) == 2:
-                # --- Layout 3 kolom, tampil di tengah
                 col1, col2, col3 = st.columns([1, 2, 1])
                 with col2:
                     x, y = fitur_tersedia[:2]
@@ -630,7 +585,6 @@ if tampilkan and not invalid:
                     plt.close()
 
             elif len(indikator) > 2 or indikator == ["Semua Indikator"]:
-                # --- Kombinasi semua pasangan fitur
                 kombinasi = list(itertools.combinations(fitur_tersedia, 2))
 
                 plt.figure(figsize=(15, 10))
@@ -654,62 +608,6 @@ if tampilkan and not invalid:
                 plt.tight_layout()
                 st.pyplot(plt)
                 plt.close()
-#             if algoritma == "Agglomerative (AHC)":
-
-# # --- Pastikan index sinkron ---
-#                 datanum = df_scaled.copy()
-#                 datanum = datanum.drop_duplicates(keep='first', inplace= True)
-
-#                 # datanum = df_scaled.select_dtypes(include=[np.number])
-#                 # --- 2️⃣ Hitung linkage untuk dendrogram ---
-#                 linked = linkage(datanum, method="ward")
-
-#                 # --- 3️⃣ Buat dendrogram interaktif dengan label ---
-#                 fig = ff.create_dendrogram(
-#                     linked,
-#                     orientation="bottom",
-#                     labels=data_peta["alt_name"],         
-#                     color_threshold=0
-#                 )
-
-#                 # --- 4️⃣ Atur tampilan dan interaksi ---
-#                 fig.update_layout(
-#                     width=1200,
-#                     height=700,
-#                     showlegend=False,
-#                     template="plotly_white",
-#                     title={
-#                         "text": f"🧬 Dendrogram AHC (Cluster = {jumlah_cluster})",
-#                         "x": 0.5,
-#                         "xanchor": "center",
-#                         "yanchor": "top"
-#                     },
-#                     xaxis=dict(
-#                         tickangle=45,
-#                         tickfont=dict(size=9),
-#                     )
-#                 )
-
-#                     # --- 5️⃣ (Opsional) Tambahkan garis horizontal sebagai batas cluster ---
-#                 import plotly.graph_objects as go
-#                 from scipy.cluster.hierarchy import fcluster
-
-#                 # Tentukan threshold berdasarkan jumlah cluster
-#                 cluster_labels = fcluster(linked, jumlah_cluster, criterion="maxclust")
-#                 # Ambil tinggi pemotongan (optional untuk tampilan)
-#                 threshold = sorted(linked[:, 2], reverse=True)[jumlah_cluster - 1]
-#                 fig.add_shape(
-#                     type="line",
-#                     x0=-0.5,
-#                     x1=len()-0.5,
-#                     y0=threshold,
-#                     y1=threshold,
-#                     line=dict(color="red", width=2, dash="dash"),
-#                 )
-
-#                 # --- 6️⃣ Tampilkan ke Streamlit ---
-#                 st.plotly_chart(fig, use_container_width=True)
-    
     status_placeholder.success("✅ Data berhasil diproses!")
 
 # --- Tombol Kembali ---
