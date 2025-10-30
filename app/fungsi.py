@@ -355,12 +355,12 @@ def data_pivot_awal(data_asli, kolom_fitur, scaler=None):
         print("⚠️ Semua nilai kolom 'Nilai' kosong, periksa data sumber atau scaler.")
     return df_long
 
-def buat_data_boxplot(data_kmeans_final, kolom_fitur):
+def buat_data_boxplot(data_algoritma, kolom_fitur):
     """
     Membentuk data dalam format long (melt) untuk visualisasi boxplot.
     Tidak melakukan inverse scaling — hanya ubah bentuk data.
     """
-    df = data_kmeans_final.copy()
+    df = data_algoritma.copy()
     df = df.drop_duplicates(subset="geometry",keep='first')          
 
     # --- 1️⃣ Ambil kolom tahun (yang mengandung _202) ---

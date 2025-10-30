@@ -135,7 +135,7 @@ if tampilkan and not invalid:
             data_pivot_awal = data_pivot_awal(df_inverse, kolom_fitur)
 
             if algoritma == "K-Means":
-                kmeans_result, data_kmeans_final = train_kmeans(
+                algortima_result, data_algoritma = train_kmeans(
                     data_scaled=df_scaled,
                     data_scaled_null=df_scaled_null,
                     kolom_fitur=kolom_fitur,
@@ -146,7 +146,7 @@ if tampilkan and not invalid:
                 )
             
             elif algoritma =="Agglomerative (AHC)":
-                kmeans_result, data_kmeans_final = train_ahc(
+                algortima_result, data_algoritma = train_ahc(
                     data_scaled=df_scaled,
                     data_scaled_null=df_scaled_null,
                     kolom_fitur=kolom_fitur,
@@ -157,7 +157,7 @@ if tampilkan and not invalid:
                 )
 
             elif algoritma =="Spectral Bridges":
-                kmeans_result,data_kmeans_final = train_sb(
+                algortima_result,data_algoritma = train_sb(
                     data_scaled=df_scaled,
                     data_scaled_null = df_scaled_null,
                     kolom_fitur=kolom_fitur,
@@ -167,7 +167,7 @@ if tampilkan and not invalid:
                     tahun=tahun
                 )
             data_boxplot = buat_data_boxplot(
-                data_kmeans_final=data_kmeans_final,
+                data_algoritma=data_algoritma,
                 kolom_fitur=kolom_fitur,
             )
             data_boxplot_final = data_boxplot.copy()
@@ -248,7 +248,7 @@ if tampilkan and not invalid:
             box_df = box_df.dropna(subset=["Cluster"])
             box_df["Cluster"] = box_df["Cluster"].astype(int)         
 
-            data_peta = data_kmeans_final.copy()
+            data_peta = data_algoritma.copy()
     
             with col2:
                 plt.figure(figsize=(6, 5))
@@ -373,13 +373,13 @@ if tampilkan and not invalid:
             m.get_root().html.add_child(folium.Element(legend_html))
             st_folium(m, width=1200, height=700, returned_objects=[])
             
-            if kmeans_result is not None:
+            if algortima_result is not None:
                 st.markdown("### 📊 Nilai Metrik Evaluasi")
                 colm1, colm2 = st.columns(2)
                 with colm1:
-                    st.metric("Silhouette Coefficient", f"{kmeans_result['silhouette_avg']:.4f}")
+                    st.metric("Silhouette Coefficient", f"{algortima_result['silhouette_avg']:.4f}")
                 with colm2:
-                    st.metric("Davies–Bouldin Index", f"{kmeans_result['dbi']:.4f}")
+                    st.metric("Davies–Bouldin Index", f"{algortima_result['dbi']:.4f}")
 
 #=================================== (4) SILHOUETTE PLOT & BAR PLOT ===================================
             col4,col5=st.columns(2)
