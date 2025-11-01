@@ -84,18 +84,19 @@ if st.button("📊 Tampilkan Visualisasi"):
     status_placeholder = st.empty()    
     with st.spinner("⏳ Sedang memproses data..."):    
         if algoritma == "K-Means":
-            table_name = "model_kmeans"
+            model = "kmeans"
         elif algoritma == "AHC":
-            table_name = "model_ahc"
+            model = "ahc"
         elif algoritma == "Spectral Bridges":
-            table_name = "model_sb"
+            model = "sb"
         cur.execute(f"""
             SELECT nama_model, path_model, silhouette, dbi
-            FROM {table_name}
+            FROM model
             WHERE dataset_id = %s 
               AND user_id = %s
-              AND jumlah_cluster = %s;
-        """, (dataset_id, user_id, jumlah_cluster))
+              AND jumlah_cluster = %s
+              AND algoritma = %s;
+        """, (dataset_id, user_id, jumlah_cluster, model))
         models = cur.fetchall()
 
         if not models:

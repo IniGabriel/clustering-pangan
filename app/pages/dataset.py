@@ -44,7 +44,7 @@ try:
         st.error("Terjadi kesalahan silahkan login kembali.")
         for key in ["logged_in", "username", "email"]:
             if key in st.session_state:
-                del st.session_state[key]           
+                del st.session_state[key]
         time.sleep(1.5)
         st.switch_page("home.py")
         st.stop()
@@ -72,29 +72,26 @@ datasets = cur.fetchall()
 deleted_count = 0
 deleted_model_count = 0
 deleted_model_files = 0
-tabel_model = ["model_kmeans", "model_ahc", "model_sb"]
 
 for (dataset_id, nama_dataset, path_dataset, sudah_dilatih) in datasets:
     if not os.path.exists(path_dataset):
         st.warning(f"⚠️ File dataset '{nama_dataset}' tidak ditemukan di: {path_dataset}")
 
         try:
-            # 🔹 1️⃣ Hapus semua file hasil model terkait
-            for tabel in tabel_model:
-                cur.execute(f"SELECT path_model FROM {tabel} WHERE dataset_id = %s;", (dataset_id,))
-                model_files = cur.fetchall()
+            # 🔹 1️⃣ Hapus semua file hasil model terkait (semua algoritma)
+            cur.execute("SELECT path_model FROM model WHERE dataset_id = %s;", (dataset_id,))
+            model_files = cur.fetchall()
 
-                for (path_model,) in model_files:
-                    if path_model and os.path.exists(path_model):
-                        try:
-                            os.remove(path_model)
-                            deleted_model_files += 1
-                        except Exception as e:
-                            st.warning(f"Gagal menghapus file model: {path_model} ({e})")
+            for (path_model,) in model_files:
+                if path_model and os.path.exists(path_model):
+                    try:
+                        os.remove(path_model)
+                        deleted_model_files += 1
+                    except Exception as e:
+                        st.warning(f"Gagal menghapus file model: {path_model} ({e})")
 
-                cur.execute(f"DELETE FROM {tabel} WHERE dataset_id = %s;", (dataset_id,))
-                deleted_model_count += cur.rowcount
-
+            cur.execute("DELETE FROM model WHERE dataset_id = %s;", (dataset_id,))
+            deleted_model_count += cur.rowcount
             conn.commit()
 
             # 🔹 2️⃣ Hapus dataset dari tabel utama
@@ -190,26 +187,23 @@ for idx, (dataset_id, nama_dataset, path_dataset, sudah_dilatih) in enumerate(da
                     else:
                         st.warning(f"⚠️ File utama tidak ditemukan: `{path_dataset}`")
 
-                    # 🔹 Hapus model terkait
-                    tabel_model = ["model_kmeans", "model_ahc", "model_sb"]
+                    # 🔹 Hapus model terkait (semua algoritma)
                     total_model_deleted = 0
                     total_file_deleted = 0
 
-                    for tabel in tabel_model:
-                        cur.execute(f"SELECT path_model FROM {tabel} WHERE dataset_id = %s;", (dataset_id,))
-                        model_files = cur.fetchall()
+                    cur.execute("SELECT path_model FROM model WHERE dataset_id = %s;", (dataset_id,))
+                    model_files = cur.fetchall()
 
-                        for (path_model,) in model_files:
-                            if path_model and os.path.exists(path_model):
-                                try:
-                                    os.remove(path_model)
-                                    total_file_deleted += 1
-                                except Exception as e:
-                                    st.warning(f"Gagal hapus file model: {path_model} ({e})")
+                    for (path_model,) in model_files:
+                        if path_model and os.path.exists(path_model):
+                            try:
+                                os.remove(path_model)
+                                total_file_deleted += 1
+                            except Exception as e:
+                                st.warning(f"Gagal hapus file model: {path_model} ({e})")
 
-                        cur.execute(f"DELETE FROM {tabel} WHERE dataset_id = %s;", (dataset_id,))
-                        total_model_deleted += cur.rowcount
-
+                    cur.execute("DELETE FROM model WHERE dataset_id = %s;", (dataset_id,))
+                    total_model_deleted = cur.rowcount
                     conn.commit()
 
                     # 🔹 Hapus dataset di DB

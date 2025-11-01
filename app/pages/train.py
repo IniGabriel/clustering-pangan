@@ -262,7 +262,7 @@ if logged_in:
                     data_inverse=df,
                     kolom_fitur=kolom_fitur
                 )
-                table_name = "model_kmeans"
+                algoritma="kmeans"
             elif algoritma == "AHC":
                 model, df_model = train_ahc(
                     data_scaled=df_scaled,
@@ -271,7 +271,7 @@ if logged_in:
                     data_inverse=df,
                     kolom_fitur=kolom_fitur
                 )
-                table_name = "model_ahc"
+                algoritma="ahc"
             else:
                 model, df_model = train_sb(
                     data_scaled=df_scaled,
@@ -280,8 +280,7 @@ if logged_in:
                     data_inverse=df,
                     kolom_fitur=kolom_fitur
                 )
-                table_name = "model_sb"
-
+                algoritma = "sb"
             df_model_copy = df_model.copy()
             kolom_fitur = [c for c in df.columns if c.lower() not in ["kab_kota","label"]]
             if any("_202" in col for col in df.columns):
@@ -314,7 +313,7 @@ if logged_in:
             # simpan hasil dan metadata
             dataset_folder = os.path.dirname(selected_dataset)
             cur.execute("""
-                SELECT dataset_id FROM Dataset WHERE user_id = %s AND path_dataset = %s LIMIT 1;
+                SELECT dataset_id FROM dataset WHERE user_id = %s AND path_dataset = %s LIMIT 1;
             """, (user_id, selected_dataset))
             row = cur.fetchone()
             dataset_id = row[0] if row else "unknown"
@@ -337,33 +336,44 @@ if logged_in:
             waktu = float(model.get("waktu_komputasi", 0)) if model.get("waktu_komputasi") is not None else None
 
             try:
-                insert_query = f"""
-                    INSERT INTO {table_name}
-                    (nama_model, path_model, jumlah_cluster, silhouette, dbi, waktu_komputasi, user_id, dataset_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s,
-                        (SELECT dataset_id FROM Dataset WHERE user_id = %s AND path_dataset = %s LIMIT 1)
-                    );
-                """
-                check_query = f"""
+                # === Query cek apakah model sudah ada ===
+                check_query = """
                     SELECT EXISTS (
-                        SELECT 1 FROM {table_name} m
-                        JOIN Dataset d ON m.dataset_id = d.dataset_id
+                        SELECT 1 FROM model m
+                        JOIN dataset d ON m.dataset_id = d.dataset_id
                         WHERE m.user_id = %s 
                         AND d.path_dataset = %s 
                         AND m.nama_model = %s
+                        AND m.algoritma = %s
                     );
                 """
+
+                # === Query insert model baru ===
+                insert_query = """
+                    INSERT INTO model
+                    (nama_model, path_model, jumlah_cluster, silhouette, dbi, waktu_komputasi, user_id, dataset_id, algoritma)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                """
+
+                # === Daftar file hasil ===
                 model_files = [
                     ("df_model", path_df_model),
                     ("df_long", path_df_long),
                     ("df_wide", path_df_wide)
                 ]
+
+                # === Loop simpan setiap model hasil ===
                 for nama, path_iter in model_files:
                     nama_model_iter = f"{nama}_{algoritma}_{jumlah_cluster}"
-                    cur.execute(check_query, (user_id, selected_dataset, nama_model_iter))
+
+                    # Cek apakah sudah ada model dengan nama + algoritma + dataset yang sama
+                    cur.execute(check_query, (user_id, selected_dataset, nama_model_iter, algoritma))
                     sudah_ada = cur.fetchone()[0]
                     if sudah_ada:
+                        st.info(f"ℹ️ Model '{nama_model_iter}' sudah ada di database, dilewati.")
                         continue
+
+                    # Simpan ke tabel model
                     cur.execute(insert_query, (
                         nama_model_iter,
                         path_iter,
@@ -372,20 +382,30 @@ if logged_in:
                         dbi,
                         waktu,
                         user_id,
-                        user_id,
-                        selected_dataset
+                        dataset_id,
+                        algoritma
                     ))
+
                 conn.commit()
-                cur.execute("""
-                    UPDATE Dataset
-                    SET sudah_dilatih = TRUE
-                    WHERE user_id = %s AND path_dataset = %s;
-                """, (user_id, selected_dataset))
-                conn.commit()
+
+                # === Update status dataset jika kolom sudah_dilatih ada ===
+                try:
+                    cur.execute("""
+                        UPDATE dataset
+                        SET sudah_dilatih = TRUE
+                        WHERE user_id = %s AND path_dataset = %s;
+                    """, (user_id, selected_dataset))
+                    conn.commit()
+                except psycopg2.errors.UndefinedColumn:
+                    conn.rollback()  # kolom tidak ada — diabaikan
+                    pass
+
+                status_placeholder.success("✅ Data berhasil diklaster!")
+
             except Exception as e:
                 conn.rollback()
                 st.error(f"❌ Gagal menyimpan metadata model ke database: {e}")
-            status_placeholder.success("✅ Data berhasil diklaster!")
+
 
 else:
     st.warning("Mohon maaf terjadi kesalahan. Silahkan login kembali!")
