@@ -78,6 +78,13 @@ tahun = st.selectbox("Pilih Tahun:", tahun_opsi, index=5)
 indikator_opsi = ["IKP", "PPH", "AKE", "AKP", "Semua Indikator"]
 indikator = st.multiselect("Pilih Indikator:", indikator_opsi, default=["Semua Indikator"])
 jumlah_cluster = st.slider("Pilih Jumlah Cluster:", 2, 7, 2, 1)
+
+st.info(
+    "- Hasil pengujian menunjukkan bahwa konfigurasi optimal cenderung muncul ketika menggunakan jumlah **cluster = 2**.\n\n"
+    "- Nilai metrik evaluasi dapat menurun jika tidak menggunakan kombinasi semua tahun dan semua fitur, "
+    "karena proses pencarian random state terbaik dilakukan pada konfigurasi lengkap tersebut. Namun nilai metrik dapat meningkat pada beberapa kasus tertentu."
+)
+
 tampilkan = st.button("🟩 Tampilkan Visualisasi")
 
 invalid = False
@@ -105,6 +112,128 @@ if "Semua Indikator" in indikator and len(indikator) > 1:
 #     if st.button("🌉 Jalankan Semua Spectral Bridges"):
 #         from fungsi import train_all_sb_excel
 #         train_all_sb_excel()
+
+
+# # === TOMBOL TAMBAHAN UNTUK GENERATE HASIL CLUSTER SEMUA TAHUN ===
+# # === 📘 Generate Ringkasan Cluster per Tahun ===
+# # === 📘 Generate Ringkasan Cluster per Tahun ===
+# st.markdown("---")
+# st.markdown("### 📘 Generate Ringkasan Cluster per Tahun")
+
+# if st.button("🔄 Buat Tabel Ringkasan Cluster Semua Tahun"):
+#     st.info("⏳ Sedang membuat tabel ringkasan cluster untuk 2021–2023...")
+
+#     tahun_loop = ["2021", "2022", "2023"]
+#     hasil_cluster = []
+
+#     # === Load Path & Dataset (sekali di awal) ===
+#     hasil_kmeans_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "summary", "hasil_kmeans_all_all.pkl")
+#     hasil_ahc_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "summary", "hasil_ahc_all_all.pkl")
+#     hasil_sb_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "summary", "hasil_sb_all_all.pkl")
+#     scaler_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "scaler.pkl")
+
+#     df_scaled_path = os.path.join(current_dir, "..", "..", "Dataset", "pre", "data_scaled.geojson")
+#     df_scaled_null_path = os.path.join(current_dir, "..", "..", "Dataset", "pre", "data_scaled_null.geojson")
+
+#     df_scaled = gpd.read_file(df_scaled_path)
+#     df_scaled_null = gpd.read_file(df_scaled_null_path)
+#     with open(scaler_path, "rb") as f:
+#         scaler = pickle.load(f)
+#     df_inverse = inverse(df_scaled, scaler)
+
+#     # Simpan daftar semua kab/kota (biar jumlahnya fix 514)
+#     kab_kota_all = sorted(df_scaled["kab_kota"].unique().tolist())
+
+#     # === Loop tiap tahun 2021–2023 ===
+#     for th in tahun_loop:
+#         kolom_fitur_tahun = get_kolom_fitur(["Semua Indikator"], th, th)
+
+#         if algoritma == "K-Means":
+#             _, df_th = train_kmeans(
+#                 data_scaled=df_scaled,
+#                 hasil_kmeans_path=hasil_kmeans_path,
+#                 jumlah_cluster=jumlah_cluster,
+#                 data_scaled_null=df_scaled_null,
+#                 data_inverse=df_inverse,
+#                 tahun=th,
+#                 kolom_fitur=kolom_fitur_tahun
+#             )
+
+#         elif algoritma == "Agglomerative (AHC)":
+#             _, df_th = train_ahc(
+#                 data_scaled=df_scaled,
+#                 hasil_ahc_path=hasil_ahc_path,
+#                 jumlah_cluster=jumlah_cluster,
+#                 data_scaled_null=df_scaled_null,
+#                 data_inverse=df_inverse,
+#                 tahun=th,
+#                 kolom_fitur=kolom_fitur_tahun
+#             )
+
+#         elif algoritma == "Spectral Bridges":
+#             _, df_th = train_sb(
+#                 data_scaled=df_scaled,
+#                 hasil_sb_path=hasil_sb_path,
+#                 jumlah_cluster=jumlah_cluster,
+#                 data_scaled_null=df_scaled_null,
+#                 data_inverse=df_inverse,
+#                 tahun=th,
+#                 kolom_fitur=kolom_fitur_tahun
+#             )
+
+#         # Pastikan hanya satu baris per kabupaten
+#         df_clean = (
+#             df_th[["kab_kota", "Cluster"]]
+#             .drop_duplicates(subset=["kab_kota"], keep="first")
+#             .set_index("kab_kota")
+#             .reindex(kab_kota_all, fill_value=-1)   # isi yang hilang dengan -1 (Undefined)
+#             .reset_index()
+#             .rename(columns={"Cluster": f"Cluster_{th}"})
+#         )
+#         hasil_cluster.append(df_clean)
+
+#     # === Gabungkan hasil tiap tahun ===
+#     df_merge = hasil_cluster[0]
+#     for i in range(1, len(hasil_cluster)):
+#         df_merge = pd.merge(df_merge, hasil_cluster[i], on="kab_kota", how="outer")
+
+#     # Ubah semua kolom cluster ke integer
+#     for col in ["Cluster_2021", "Cluster_2022", "Cluster_2023"]:
+#         if col in df_merge.columns:
+#             df_merge[col] = pd.to_numeric(df_merge[col], errors="coerce").fillna(-1).astype(int)
+
+#     # Gabungkan transisi tahun jadi string
+#     df_merge["Semua_Tahun"] = df_merge[["Cluster_2021", "Cluster_2022", "Cluster_2023"]].astype(str).agg(" → ".join, axis=1)
+
+#     # === Tampilkan hasil ===
+#     st.success("✅ Ringkasan berhasil dibuat!")
+#     st.dataframe(
+#         df_merge.sort_values("kab_kota").reset_index(drop=True),
+#         use_container_width=True
+#     )
+
+#     # === Tombol download CSV ===
+#     st.download_button(
+#         label="⬇️ Download Hasil CSV",
+#         data=df_merge.to_csv(index=False).encode("utf-8"),
+#         file_name=f"ringkasan_cluster_{algoritma.lower()}_2021_2023.csv",
+#         mime="text/csv"
+#     )
+
+#     # === Info tambahan di bawah tabel ===
+#     total_kab = len(df_merge)
+#     undefined_2021 = (df_merge["Cluster_2021"] == -1).sum()
+#     undefined_2022 = (df_merge["Cluster_2022"] == -1).sum()
+#     undefined_2023 = (df_merge["Cluster_2023"] == -1).sum()
+
+#     st.markdown(f"""
+#     **📊 Statistik Data:**
+#     - Total kabupaten/kota: `{total_kab}`
+#     - Tidak terklasifikasi (Undefined):  
+#       • 2021 = `{undefined_2021}`  
+#       • 2022 = `{undefined_2022}`  
+#       • 2023 = `{undefined_2023}`
+#     """)
 
 
 # === LOGIC ===
@@ -360,9 +489,51 @@ if tampilkan and not invalid:
                 st.markdown("### 📊 Nilai Metrik Evaluasi")
                 colm1, colm2 = st.columns(2)
                 with colm1:
+                    sil = algortima_result['silhouette_avg']
                     st.metric("Silhouette Coefficient", f"{algortima_result['silhouette_avg']:.4f}")
+                    if sil >= 0.71:
+                        st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
+                                "- Struktur cluster **kuat**.\n"
+                                "- Pemisahan antar cluster sangat jelas dan bentuk cluster kompak.")
+                    elif sil >= 0.51:
+                        st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
+                                "- Struktur cluster **baik**.\n"
+                                "- Pemisahan antar cluster jelas walaupun tidak sempurna.")
+                    elif sil >= 0.26:
+                        st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
+                                "- Struktur cluster **lemah**.\n"
+                                "- Banyak data berada pada batas antar cluster.")
+                    else:
+                        st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
+                                "- Struktur cluster **tidak terstruktur**.\n"
+                                "- Pola pengelompokan tidak terbentuk dengan baik.")
                 with colm2:
                     st.metric("Davies–Bouldin Index", f"{algortima_result['dbi']:.4f}")
+                    dbi = algortima_result['dbi']
+
+                    if dbi <= 0.6:
+                        st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
+                                "- Kualitas cluster **sangat baik**.\n"
+                                "- Cluster sangat kompak dan jauh satu sama lain.")
+                    elif dbi <= 1.0:
+                        st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
+                                "- Kualitas cluster **baik**.\n"
+                                "- Cluster masih terpisah dengan cukup jelas.")
+                    elif dbi <= 1.5:
+                        st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
+                                "- Kualitas cluster **cukup**.\n"
+                                "- Pemisahan cluster kurang kuat dan beberapa cluster saling tumpang tindih.")
+                    else:
+                        st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
+                                "- Kualitas cluster **buruk**.\n"
+                                "- Cluster tidak kompak dan jaraknya berdekatan.")     
+                st.info(
+                    "ℹ️ Perbedaan penilaian antara Silhouette dan DBI adalah hal yang wajar. "
+                    "Silhouette mengukur konsistensi tiap titik dalam cluster, sedangkan DBI "
+                    "menilai jarak antar cluster dan tingkat kekompakan keseluruhan. Karena itu, "
+                    "keduanya dapat menghasilkan interpretasi yang berbeda."
+                )
+                            
 
 #=================================== (4) SILHOUETTE PLOT & BAR PLOT ===================================
             col4,col5=st.columns(2)
@@ -557,6 +728,13 @@ if tampilkan and not invalid:
                                 plt.subplots_adjust(bottom=0.28, top=0.9, left=0.1, right=0.98)
                                 st.pyplot(plt)
                                 plt.close()
+
+                    filtered_cluster = data_peta.loc[data_peta["Cluster"] == c, ["kab_kota", "Cluster"]] \
+                        .sort_values("kab_kota") \
+                        .reset_index(drop=True)
+
+                    st.markdown("##### 📋 Daftar Kabupaten/Kota dalam Cluster Ini")
+                    st.dataframe(filtered_cluster, use_container_width=True)         
 
 # === (5) SCATTER PLOT PAIR PLOT ===================================
             if len(indikator) == 2:

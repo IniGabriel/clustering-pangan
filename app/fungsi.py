@@ -232,6 +232,8 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
     for rs in fallback_states:
         try:
             start = time.time()
+            if  jumlah_cluster == 2 and len(kolom_fitur) >3:
+                rs = 18
             model_sb = SpectralBridges(
                 n_clusters=jumlah_cluster,
                 n_nodes=60,
