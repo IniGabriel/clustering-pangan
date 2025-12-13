@@ -264,6 +264,7 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
         "dbi": round(dbi_sb, 4),
         "waktu_komputasi": waktu
     }
+    st.write(rs)
     # === Gabungkan hasil ke DataFrame ===
     data_sb = data_scaled.copy()
     data_sb["Cluster"] = labels_sb
