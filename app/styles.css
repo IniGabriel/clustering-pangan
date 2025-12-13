@@ -11,9 +11,9 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #ddd;
-    position: sticky;                /* biar nempel di atas saat scroll */
-    top: 0;                          /* posisinya di bagian atas halaman */
-    z-index: 1000;                   /* biar gak ketimpa elemen lain */
+    position: sticky;               
+    top: 0;                         
+    z-index: 1000;                  
     top:3rem;
 }
 .nav-left {

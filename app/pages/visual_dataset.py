@@ -270,6 +270,18 @@ if st.button("📊 Tampilkan Visualisasi"):
             colm1, colm2 = st.columns(2)
             with colm1:
                 st.metric("Silhouette Coefficient", f"{silhouette_val:.4f}")
+                if silhouette_val >= 0.71:
+                    st.info(f"📘 **Interpretasi Silhouette: {silhouette_val:.4f}**\n"
+                            "- Struktur cluster **kuat**.\n")
+                elif silhouette_val >= 0.51:
+                    st.info(f"📘 **Interpretasi Silhouette: {silhouette_val:.4f}**\n"
+                            "- Struktur cluster **baik**.\n")
+                elif silhouette_val >= 0.26:
+                    st.info(f"📘 **Interpretasi Silhouette: {silhouette_val:.4f}**\n"
+                            "- Struktur cluster **lemah**.\n")
+                else:
+                    st.info(f"📘 **Interpretasi Silhouette: {silhouette_val:.4f}**\n"
+                            "- Struktur cluster **tidak terstruktur**.\n")                
             with colm2:
                 st.metric("Davies–Bouldin Index", f"{dbi_val:.4f}")
         

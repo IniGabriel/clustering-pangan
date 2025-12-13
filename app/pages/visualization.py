@@ -493,47 +493,32 @@ if tampilkan and not invalid:
                     st.metric("Silhouette Coefficient", f"{algortima_result['silhouette_avg']:.4f}")
                     if sil >= 0.71:
                         st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
-                                "- Struktur cluster **kuat**.\n"
-                                "- Pemisahan antar cluster sangat jelas dan bentuk cluster kompak.")
+                                "- Struktur cluster **kuat**.\n")
                     elif sil >= 0.51:
                         st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
-                                "- Struktur cluster **baik**.\n"
-                                "- Pemisahan antar cluster jelas walaupun tidak sempurna.")
+                                "- Struktur cluster **baik**.\n")
                     elif sil >= 0.26:
                         st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
-                                "- Struktur cluster **lemah**.\n"
-                                "- Banyak data berada pada batas antar cluster.")
+                                "- Struktur cluster **lemah**.\n")
                     else:
                         st.info(f"📘 **Interpretasi Silhouette: {sil:.4f}**\n"
-                                "- Struktur cluster **tidak terstruktur**.\n"
-                                "- Pola pengelompokan tidak terbentuk dengan baik.")
+                                "- Struktur cluster **tidak terstruktur**.\n")
                 with colm2:
                     st.metric("Davies–Bouldin Index", f"{algortima_result['dbi']:.4f}")
                     dbi = algortima_result['dbi']
 
                     if dbi <= 0.6:
                         st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
-                                "- Kualitas cluster **sangat baik**.\n"
-                                "- Cluster sangat kompak dan jauh satu sama lain.")
+                                "- Kualitas cluster **sangat baik**.\n")
                     elif dbi <= 1.0:
                         st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
-                                "- Kualitas cluster **baik**.\n"
-                                "- Cluster masih terpisah dengan cukup jelas.")
+                                "- Kualitas cluster **baik**.\n")
                     elif dbi <= 1.5:
                         st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
-                                "- Kualitas cluster **cukup**.\n"
-                                "- Pemisahan cluster kurang kuat dan beberapa cluster saling tumpang tindih.")
+                                "- Kualitas cluster **cukup**.\n")
                     else:
                         st.info(f"📗 **Interpretasi DBI: {dbi:.4f}**\n"
-                                "- Kualitas cluster **buruk**.\n"
-                                "- Cluster tidak kompak dan jaraknya berdekatan.")     
-                st.info(
-                    "ℹ️ Perbedaan penilaian antara Silhouette dan DBI adalah hal yang wajar. "
-                    "Silhouette mengukur konsistensi tiap titik dalam cluster, sedangkan DBI "
-                    "menilai jarak antar cluster dan tingkat kekompakan keseluruhan. Karena itu, "
-                    "keduanya dapat menghasilkan interpretasi yang berbeda."
-                )
-                            
+                                "- Kualitas cluster **buruk**.\n")     
 
 #=================================== (4) SILHOUETTE PLOT & BAR PLOT ===================================
             col4,col5=st.columns(2)
