@@ -228,11 +228,10 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
 
     fallback_states = [random_state_file, 76, 75, 42,2,13,25]
     model_sb, labels_sb = None, None
-
     for rs in fallback_states:
         try:
             start = time.time()
-            if  jumlah_cluster == 2 and len(kolom_fitur) >3:
+            if  jumlah_cluster == 2 and len(kolom_fitur) >3 and tahun in ['2021','2022','2023']:
                 rs = 18
             model_sb = SpectralBridges(
                 n_clusters=jumlah_cluster,
@@ -265,7 +264,6 @@ def train_sb(data_scaled, hasil_sb_path, jumlah_cluster, data_inverse=None, tahu
         "dbi": round(dbi_sb, 4),
         "waktu_komputasi": waktu
     }
-
     # === Gabungkan hasil ke DataFrame ===
     data_sb = data_scaled.copy()
     data_sb["Cluster"] = labels_sb

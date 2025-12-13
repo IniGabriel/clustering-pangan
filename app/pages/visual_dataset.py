@@ -284,7 +284,20 @@ if st.button("📊 Tampilkan Visualisasi"):
                             "- Struktur cluster **tidak terstruktur**.\n")                
             with colm2:
                 st.metric("Davies–Bouldin Index", f"{dbi_val:.4f}")
-        
+                
+                if dbi_val <= 0.6:
+                    st.info(f"📗 **Interpretasi DBI: {dbi_val:.4f}**\n"
+                            "- Kualitas cluster **sangat baik**.\n")
+                elif dbi_val <= 1.0:
+                    st.info(f"📗 **Interpretasi DBI: {dbi_val:.4f}**\n"
+                            "- Kualitas cluster **baik**.\n")
+                elif dbi_val <= 1.5:
+                    st.info(f"📗 **Interpretasi DBI: {dbi_val:.4f}**\n"
+                            "- Kualitas cluster **cukup**.\n")
+                else:
+                    st.info(f"📗 **Interpretasi DBI: {dbi_val:.4f}**\n"
+                            "- Kualitas cluster **buruk**.\n")                     
+    
         col4,col5= st.columns(2)
         with col4:
             

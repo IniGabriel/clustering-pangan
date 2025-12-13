@@ -428,16 +428,14 @@ if tampilkan and not invalid:
             center_lon = data_peta.geometry.centroid.x.mean()
             
             duplikat_geom = data_peta[data_peta.duplicated(subset="geometry", keep=False)]
-
-            print(f"Jumlah data sebelum: {len(data_peta)}")
             data_peta = data_peta.drop_duplicates(subset="geometry", keep="first")
-            print(f"Jumlah data sesudah hapus duplikat: {len(data_peta)}")
-            if not duplikat_geom.empty:
-                print("⚠️ Ada geometry yang duplikat!")
-                print(f"Jumlah baris duplikat: {len(duplikat_geom)}")
-                print(duplikat_geom[["kab_kota", "geometry"]])
-            else:
-                print("✅ Tidak ada duplikat geometry.")
+
+            # if not duplikat_geom.empty:
+            #     print("⚠️ Ada geometry yang duplikat!")
+            #     print(f"Jumlah baris duplikat: {len(duplikat_geom)}")
+            #     print(duplikat_geom[["kab_kota", "geometry"]])
+            # else:
+            #     print("✅ Tidak ada duplikat geometry.")
 
             m = folium.Map(
                 location=[center_lat, center_lon],
