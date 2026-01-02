@@ -95,146 +95,6 @@ if "Semua Indikator" in indikator and len(indikator) > 1:
     st.warning("⚠️ Jika memilih 'Semua Indikator', jangan pilih indikator lain.")
     invalid = True
 
-# st.markdown("### ⚙️ Pelatihan Massal Semua Algoritma")
-
-# col1, col2, col3 = st.columns(3)
-# with col1:
-#     if st.button("🚀 Jalankan Semua K-Means"):
-#         from fungsi import train_all_kmeans_excel
-#         train_all_kmeans_excel()
-
-# with col2:
-#     if st.button("🧬 Jalankan Semua AHC"):
-#         from fungsi import train_all_ahc_excel
-#         train_all_ahc_excel()
-
-# with col3:
-#     if st.button("🌉 Jalankan Semua Spectral Bridges"):
-#         from fungsi import train_all_sb_excel
-#         train_all_sb_excel()
-
-
-# # === TOMBOL TAMBAHAN UNTUK GENERATE HASIL CLUSTER SEMUA TAHUN ===
-# # === 📘 Generate Ringkasan Cluster per Tahun ===
-# # === 📘 Generate Ringkasan Cluster per Tahun ===
-# st.markdown("---")
-# st.markdown("### 📘 Generate Ringkasan Cluster per Tahun")
-
-# if st.button("🔄 Buat Tabel Ringkasan Cluster Semua Tahun"):
-#     st.info("⏳ Sedang membuat tabel ringkasan cluster untuk 2021–2023...")
-
-#     tahun_loop = ["2021", "2022", "2023"]
-#     hasil_cluster = []
-
-#     # === Load Path & Dataset (sekali di awal) ===
-#     hasil_kmeans_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "summary", "hasil_kmeans_all_all.pkl")
-#     hasil_ahc_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "summary", "hasil_ahc_all_all.pkl")
-#     hasil_sb_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "summary", "hasil_sb_all_all.pkl")
-#     scaler_path = os.path.join(current_dir, "..", "..", "Dataset", "model", "scaler.pkl")
-
-#     df_scaled_path = os.path.join(current_dir, "..", "..", "Dataset", "pre", "data_scaled.geojson")
-#     df_scaled_null_path = os.path.join(current_dir, "..", "..", "Dataset", "pre", "data_scaled_null.geojson")
-
-#     df_scaled = gpd.read_file(df_scaled_path)
-#     df_scaled_null = gpd.read_file(df_scaled_null_path)
-#     with open(scaler_path, "rb") as f:
-#         scaler = pickle.load(f)
-#     df_inverse = inverse(df_scaled, scaler)
-
-#     # Simpan daftar semua kab/kota (biar jumlahnya fix 514)
-#     kab_kota_all = sorted(df_scaled["kab_kota"].unique().tolist())
-
-#     # === Loop tiap tahun 2021–2023 ===
-#     for th in tahun_loop:
-#         kolom_fitur_tahun = get_kolom_fitur(["Semua Indikator"], th, th)
-
-#         if algoritma == "K-Means":
-#             _, df_th = train_kmeans(
-#                 data_scaled=df_scaled,
-#                 hasil_kmeans_path=hasil_kmeans_path,
-#                 jumlah_cluster=jumlah_cluster,
-#                 data_scaled_null=df_scaled_null,
-#                 data_inverse=df_inverse,
-#                 tahun=th,
-#                 kolom_fitur=kolom_fitur_tahun
-#             )
-
-#         elif algoritma == "Agglomerative (AHC)":
-#             _, df_th = train_ahc(
-#                 data_scaled=df_scaled,
-#                 hasil_ahc_path=hasil_ahc_path,
-#                 jumlah_cluster=jumlah_cluster,
-#                 data_scaled_null=df_scaled_null,
-#                 data_inverse=df_inverse,
-#                 tahun=th,
-#                 kolom_fitur=kolom_fitur_tahun
-#             )
-
-#         elif algoritma == "Spectral Bridges":
-#             _, df_th = train_sb(
-#                 data_scaled=df_scaled,
-#                 hasil_sb_path=hasil_sb_path,
-#                 jumlah_cluster=jumlah_cluster,
-#                 data_scaled_null=df_scaled_null,
-#                 data_inverse=df_inverse,
-#                 tahun=th,
-#                 kolom_fitur=kolom_fitur_tahun
-#             )
-
-#         # Pastikan hanya satu baris per kabupaten
-#         df_clean = (
-#             df_th[["kab_kota", "Cluster"]]
-#             .drop_duplicates(subset=["kab_kota"], keep="first")
-#             .set_index("kab_kota")
-#             .reindex(kab_kota_all, fill_value=-1)   # isi yang hilang dengan -1 (Undefined)
-#             .reset_index()
-#             .rename(columns={"Cluster": f"Cluster_{th}"})
-#         )
-#         hasil_cluster.append(df_clean)
-
-#     # === Gabungkan hasil tiap tahun ===
-#     df_merge = hasil_cluster[0]
-#     for i in range(1, len(hasil_cluster)):
-#         df_merge = pd.merge(df_merge, hasil_cluster[i], on="kab_kota", how="outer")
-
-#     # Ubah semua kolom cluster ke integer
-#     for col in ["Cluster_2021", "Cluster_2022", "Cluster_2023"]:
-#         if col in df_merge.columns:
-#             df_merge[col] = pd.to_numeric(df_merge[col], errors="coerce").fillna(-1).astype(int)
-
-#     # Gabungkan transisi tahun jadi string
-#     df_merge["Semua_Tahun"] = df_merge[["Cluster_2021", "Cluster_2022", "Cluster_2023"]].astype(str).agg(" → ".join, axis=1)
-
-#     # === Tampilkan hasil ===
-#     st.success("✅ Ringkasan berhasil dibuat!")
-#     st.dataframe(
-#         df_merge.sort_values("kab_kota").reset_index(drop=True),
-#         use_container_width=True
-#     )
-
-#     # === Tombol download CSV ===
-#     st.download_button(
-#         label="⬇️ Download Hasil CSV",
-#         data=df_merge.to_csv(index=False).encode("utf-8"),
-#         file_name=f"ringkasan_cluster_{algoritma.lower()}_2021_2023.csv",
-#         mime="text/csv"
-#     )
-
-#     # === Info tambahan di bawah tabel ===
-#     total_kab = len(df_merge)
-#     undefined_2021 = (df_merge["Cluster_2021"] == -1).sum()
-#     undefined_2022 = (df_merge["Cluster_2022"] == -1).sum()
-#     undefined_2023 = (df_merge["Cluster_2023"] == -1).sum()
-
-#     st.markdown(f"""
-#     **📊 Statistik Data:**
-#     - Total kabupaten/kota: `{total_kab}`
-#     - Tidak terklasifikasi (Undefined):  
-#       • 2021 = `{undefined_2021}`  
-#       • 2022 = `{undefined_2022}`  
-#       • 2023 = `{undefined_2023}`
-#     """)
-
 
 # === LOGIC ===
 if tampilkan and not invalid:
@@ -295,20 +155,6 @@ if tampilkan and not invalid:
                     data_inverse = df_inverse,
                     tahun=tahun
                 )
-            # Keperluan Dokumentasi Metric
-            # col1, col2, col3 = st.columns(3)
-
-            # with col1:
-            #     # Gunakan f-string untuk memformat 2 angka di belakang koma
-            #     st.metric("Silhouette Score", f"{algortima_result['silhouette_avg']:.2f}")
-
-            # with col2:
-            #     # Gunakan f-string untuk memformat 2 angka di belakang koma
-            #     st.metric("DBI", f"{algortima_result['dbi']:.2f}")
-
-            # with col3:
-            #     # Ini sudah benar (4 angka di belakang koma + huruf 's')
-            #     st.metric("Waktu Komputasi", f"{algortima_result['waktu_komputasi']:.4f} s")
 
             data_boxplot = buat_data_boxplot(
                 data_algoritma=data_algoritma,
@@ -367,8 +213,6 @@ if tampilkan and not invalid:
                     plt.tight_layout()
                     st.pyplot(plt)
 
-
-
         # ================== (2) BOX PLOT ===================================
             indikator_list = [col.split("_")[0] for col in kolom_fitur]
             tahun_list = [col.split("_")[1] for col in kolom_fitur]
@@ -415,14 +259,7 @@ if tampilkan and not invalid:
 
                 plt.tight_layout()
                 st.pyplot(plt)
-
-            # Keperluan Dokumentasi Rentang Nilai Boxplot
-            stats_df = box_df.groupby(['Cluster', 'Fitur'])['Nilai'].describe()
-            stats_final = stats_df[['min', '25%', '50%', '75%', 'max']].reset_index()
-            stats_final.columns = ['Cluster', 'Fitur', 'Min', 'Q1', 'Median (Q2)', 'Q3', 'Max']
-            
-            st.write("#### Detail Rentang Nilai (Quartile)")
-            st.dataframe(stats_final, use_container_width=True)                
+          
 
         #================ (3) PETA (HTML FOLIUM) =====================================
             # df_scatter=data_boxplot_final.copy()
@@ -453,13 +290,6 @@ if tampilkan and not invalid:
             
             duplikat_geom = data_peta[data_peta.duplicated(subset="geometry", keep=False)]
             data_peta = data_peta.drop_duplicates(subset="geometry", keep="first")
-
-            # if not duplikat_geom.empty:
-            #     print("⚠️ Ada geometry yang duplikat!")
-            #     print(f"Jumlah baris duplikat: {len(duplikat_geom)}")
-            #     print(duplikat_geom[["kab_kota", "geometry"]])
-            # else:
-            #     print("✅ Tidak ada duplikat geometry.")
 
             m = folium.Map(
                 location=[center_lat, center_lon],
