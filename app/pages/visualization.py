@@ -295,6 +295,21 @@ if tampilkan and not invalid:
                     data_inverse = df_inverse,
                     tahun=tahun
                 )
+            # Keperluan Dokumentasi Metric
+            # col1, col2, col3 = st.columns(3)
+
+            # with col1:
+            #     # Gunakan f-string untuk memformat 2 angka di belakang koma
+            #     st.metric("Silhouette Score", f"{algortima_result['silhouette_avg']:.2f}")
+
+            # with col2:
+            #     # Gunakan f-string untuk memformat 2 angka di belakang koma
+            #     st.metric("DBI", f"{algortima_result['dbi']:.2f}")
+
+            # with col3:
+            #     # Ini sudah benar (4 angka di belakang koma + huruf 's')
+            #     st.metric("Waktu Komputasi", f"{algortima_result['waktu_komputasi']:.4f} s")
+
             data_boxplot = buat_data_boxplot(
                 data_algoritma=data_algoritma,
                 kolom_fitur=kolom_fitur,
@@ -353,6 +368,7 @@ if tampilkan and not invalid:
                     st.pyplot(plt)
 
 
+
         # ================== (2) BOX PLOT ===================================
             indikator_list = [col.split("_")[0] for col in kolom_fitur]
             tahun_list = [col.split("_")[1] for col in kolom_fitur]
@@ -399,6 +415,14 @@ if tampilkan and not invalid:
 
                 plt.tight_layout()
                 st.pyplot(plt)
+
+            # Keperluan Dokumentasi Rentang Nilai Boxplot
+            stats_df = box_df.groupby(['Cluster', 'Fitur'])['Nilai'].describe()
+            stats_final = stats_df[['min', '25%', '50%', '75%', 'max']].reset_index()
+            stats_final.columns = ['Cluster', 'Fitur', 'Min', 'Q1', 'Median (Q2)', 'Q3', 'Max']
+            
+            st.write("#### Detail Rentang Nilai (Quartile)")
+            st.dataframe(stats_final, use_container_width=True)                
 
         #================ (3) PETA (HTML FOLIUM) =====================================
             # df_scatter=data_boxplot_final.copy()
@@ -628,96 +652,96 @@ if tampilkan and not invalid:
                 st.pyplot(plt)      
 
 #-------------- TOP 10 anggota cluster 
-            df_top = df_scatter.copy()
-            df_top = (
-                df_scatter
-                .groupby(["kab_kota", "Cluster"], as_index=False)[fitur_dipakai]
-                .mean()
-            )
+            # df_top = df_scatter.copy()
+            # df_top = (
+            #     df_scatter
+            #     .groupby(["kab_kota", "Cluster"], as_index=False)[fitur_dipakai]
+            #     .mean()
+            # )
 
-            for c in sorted(df_top["Cluster"].unique()):
-                with st.expander(f"Cluster {int(c)}"):
-                    total_fitur = len(fitur_dipakai)
+            # for c in sorted(df_top["Cluster"].unique()):
+            #     with st.expander(f"Cluster {int(c)}"):
+            #         total_fitur = len(fitur_dipakai)
 
-                    if total_fitur == 1:
-                        fitur_groups = [fitur_dipakai]
-                        layout_mode = "single"
-                    elif total_fitur == 2:
-                        fitur_groups = [fitur_dipakai]
-                        layout_mode = "double"
-                    elif total_fitur == 3:
-                        fitur_groups = [fitur_dipakai[:2], [fitur_dipakai[2]]]
-                        layout_mode = "triple"
-                    elif total_fitur == 4:
-                        fitur_groups = [fitur_dipakai[:2], fitur_dipakai[2:]]
-                        layout_mode = "multi"
-                    else:
-                        fitur_groups = [fitur_dipakai[i:i+3] for i in range(0, total_fitur, 3)]
-                        layout_mode = "multi"
+            #         if total_fitur == 1:
+            #             fitur_groups = [fitur_dipakai]
+            #             layout_mode = "single"
+            #         elif total_fitur == 2:
+            #             fitur_groups = [fitur_dipakai]
+            #             layout_mode = "double"
+            #         elif total_fitur == 3:
+            #             fitur_groups = [fitur_dipakai[:2], [fitur_dipakai[2]]]
+            #             layout_mode = "triple"
+            #         elif total_fitur == 4:
+            #             fitur_groups = [fitur_dipakai[:2], fitur_dipakai[2:]]
+            #             layout_mode = "multi"
+            #         else:
+            #             fitur_groups = [fitur_dipakai[i:i+3] for i in range(0, total_fitur, 3)]
+            #             layout_mode = "multi"
 
-                    for group in fitur_groups:
-                        if layout_mode == "single":
-                            cols = st.columns([1, 2, 1])
-                            target_col = cols[1]
-                        elif layout_mode == "triple" and len(group) == 1:
-                            cols = st.columns([1, 2, 1])
-                            target_col = cols[1]
-                        else:
-                            cols = st.columns(len(group))
-                            target_col = None
+            #         for group in fitur_groups:
+            #             if layout_mode == "single":
+            #                 cols = st.columns([1, 2, 1])
+            #                 target_col = cols[1]
+            #             elif layout_mode == "triple" and len(group) == 1:
+            #                 cols = st.columns([1, 2, 1])
+            #                 target_col = cols[1]
+            #             else:
+            #                 cols = st.columns(len(group))
+            #                 target_col = None
 
-                        for idx, fitur in enumerate(group):
-                            container = target_col if target_col else cols[idx]
+            #             for idx, fitur in enumerate(group):
+            #                 container = target_col if target_col else cols[idx]
 
-                            with container:
-                                st.markdown(f"##### {fitur}")
+            #                 with container:
+            #                     st.markdown(f"##### {fitur}")
 
-                                data_cluster = df_top[df_top["Cluster"] == c]
-                                n_top = min(10, len(data_cluster))
-                                if n_top == 0:
-                                    st.warning(f"Tidak ada data untuk Cluster {c} – {fitur}")
-                                    continue
+            #                     data_cluster = df_top[df_top["Cluster"] == c]
+            #                     n_top = min(10, len(data_cluster))
+            #                     if n_top == 0:
+            #                         st.warning(f"Tidak ada data untuk Cluster {c} – {fitur}")
+            #                         continue
 
-                                topN = (
-                                    data_cluster.nlargest(n_top, fitur)[["kab_kota", fitur, "Cluster"]]
-                                    .sort_values(by=fitur, ascending=False)
-                                )
+            #                     topN = (
+            #                         data_cluster.nlargest(n_top, fitur)[["kab_kota", fitur, "Cluster"]]
+            #                         .sort_values(by=fitur, ascending=False)
+            #                     )
 
-                                plt.figure(figsize=(6.5, 8))
-                                ax = sns.barplot(
-                                    data=topN,
-                                    x="kab_kota",
-                                    y=fitur,
-                                    order=topN["kab_kota"],
-                                    color=color_map.get(int(c), "#888"),
-                                    errorbar=None,
-                                )
+            #                     plt.figure(figsize=(6.5, 8))
+            #                     ax = sns.barplot(
+            #                         data=topN,
+            #                         x="kab_kota",
+            #                         y=fitur,
+            #                         order=topN["kab_kota"],
+            #                         color=color_map.get(int(c), "#888"),
+            #                         errorbar=None,
+            #                     )
 
-                                sns.despine(top=True, right=True)
-                                ax.set_xlim(-0.5, len(topN) - 0.5)
-                                ymax = topN[fitur].max()
-                                for i, val in enumerate(topN[fitur]):
-                                    ax.text(
-                                        i, val + (ymax * 0.04),
-                                        f"{val:.2f}",
-                                        ha="center", va="bottom",
-                                        fontsize=8, fontweight="bold", clip_on=False
-                                    )
-                                plt.ylim(0, ymax * 1.18)
-                                plt.xlabel("")
-                                plt.ylabel(fitur)
-                                plt.title(f"{n_top} kab/kota dengan nilai {fitur} tertinggi", fontsize=10, pad=5)
-                                plt.xticks(rotation=40, ha="right")
-                                plt.subplots_adjust(bottom=0.28, top=0.9, left=0.1, right=0.98)
-                                st.pyplot(plt)
-                                plt.close()
+            #                     sns.despine(top=True, right=True)
+            #                     ax.set_xlim(-0.5, len(topN) - 0.5)
+            #                     ymax = topN[fitur].max()
+            #                     for i, val in enumerate(topN[fitur]):
+            #                         ax.text(
+            #                             i, val + (ymax * 0.04),
+            #                             f"{val:.2f}",
+            #                             ha="center", va="bottom",
+            #                             fontsize=8, fontweight="bold", clip_on=False
+            #                         )
+            #                     plt.ylim(0, ymax * 1.18)
+            #                     plt.xlabel("")
+            #                     plt.ylabel(fitur)
+            #                     plt.title(f"{n_top} kab/kota dengan nilai {fitur} tertinggi", fontsize=10, pad=5)
+            #                     plt.xticks(rotation=40, ha="right")
+            #                     plt.subplots_adjust(bottom=0.28, top=0.9, left=0.1, right=0.98)
+            #                     st.pyplot(plt)
+            #                     plt.close()
 
-                    filtered_cluster = data_peta.loc[data_peta["Cluster"] == c, ["kab_kota", "Cluster"]] \
-                        .sort_values("kab_kota") \
-                        .reset_index(drop=True)
+            #         filtered_cluster = data_peta.loc[data_peta["Cluster"] == c, ["kab_kota", "Cluster"]] \
+            #             .sort_values("kab_kota") \
+            #             .reset_index(drop=True)
 
-                    st.markdown("##### 📋 Daftar Kabupaten/Kota dalam Cluster Ini")
-                    st.dataframe(filtered_cluster, use_container_width=True)         
+            #         st.markdown("##### 📋 Daftar Kabupaten/Kota dalam Cluster Ini")
+            #         st.dataframe(filtered_cluster, use_container_width=True)         
 
 # === (5) SCATTER PLOT PAIR PLOT ===================================
             if len(indikator) == 2:

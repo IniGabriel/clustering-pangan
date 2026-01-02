@@ -116,7 +116,7 @@ def train_kmeans(data_scaled, hasil_kmeans_path, jumlah_cluster, data_scaled_nul
 
     fitur_unik = sorted(list({c.split("_")[0] for c in kolom_fitur}))
 
-    # --- 💾 Simpan ringkasan hasil ke Excel ---
+    # --- Simpan ringkasan hasil ke Excel ---
     data_to_save = {
         "Metode": [kmeans_result["metode"]],
         "Jumlah Cluster":jumlah_cluster,
@@ -366,7 +366,6 @@ def buat_data_boxplot(data_algoritma, kolom_fitur):
 
     if df_long["Nilai"].isnull().all():
         print("⚠️ Semua nilai kolom 'Nilai' kosong, periksa data sumber.")
-    print("len df akhir ==== ",len(df_long))
     return df_long
 
 def tambah_label_cluster(df,jumlah_cluster,mean):
