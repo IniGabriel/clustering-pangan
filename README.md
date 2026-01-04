@@ -76,8 +76,9 @@ clustering-pangan-main/
 ## Cara Instalasi 
 ### 1 Clone Github
 Lakukan import github dengan melakukan hal berikut di terminal:
+```bash
 git clone https://github.com/IniGabriel/clustering-pangan.git
-
+```
 ### 2 Install Dependencies
 Melakukan instalasi library dengan melakukan hal berikut di terminal:
 pip install -r requirements.txt
@@ -92,7 +93,7 @@ db_host = "YOUR_HOST"
 db_dbname = "YOUR_DBNAME"
 db_user = "YOUR_USER"
 db_password = "YOUR_PASSWORD"
-db_port = "5432"
+db_port = "YOUR_DB_PORT"
 
 # ===== SMTP (untuk OTP email) =====
 smtp = "smtp.gmail.com"
