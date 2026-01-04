@@ -71,13 +71,22 @@ clustering-pangan-main/
 ├─ Hasil Eksperimen/             # Artefak hasil eksperimen (pickle)
 ├─ requirements.txt
 ```
-
-> Catatan: beberapa folder seperti `Dataset/` dan `Hasil Eksperimen/` berisi artefak penelitian (opsional untuk runtime app), tergantung alur kamu menjalankan training langsung dari UI atau memakai hasil pra-hitung.
-
 ---
 
-sesuaikan dengan server:
+## Cara Instalasi 
+### 1 Clone Github
+Lakukan import github dengan melakukan hal berikut di terminal:
+git clone https://github.com/IniGabriel/clustering-pangan.git
 
+### 2 Install Dependencies
+Melakukan instalasi library dengan melakukan hal berikut di terminal:
+pip install -r requirements.txt
+
+### 3 Konfigurasi PostgreSQL dan SMTP
+Aplikasi ini menggunakan Streamlit Secrets untuk menyimpan konfigurasi database dan email OTP. 
+Buat file berikut:
+app/.streamlit/secrests.toml
+```
 # ===== PostgreSQL =====
 db_host = "YOUR_HOST"
 db_dbname = "YOUR_DBNAME"
@@ -90,7 +99,13 @@ smtp = "smtp.gmail.com"
 port = 465
 email = "YOUR_SENDER_EMAIL"
 password = "YOUR_APP_PASSWORD"
+```
+> Catatan: Jika menggunakan Gmail, pastikan menggunakan App Password, bukan password email utama.
 
+### 4 Menjalankan Aplikasi
+Ketikan perintah berikut pada terminal:
+cd app 
+python -m streamlit run home.py
 ---
 
 ## Manual 
