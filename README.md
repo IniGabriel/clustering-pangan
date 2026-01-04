@@ -81,19 +81,23 @@ git clone https://github.com/IniGabriel/clustering-pangan.git
 ```
 ### 2 Install Dependencies
 Melakukan instalasi library dengan melakukan hal berikut di terminal:
+```bash
 pip install -r requirements.txt
-
+```
 ### 3 Konfigurasi PostgreSQL dan SMTP
 Aplikasi ini menggunakan Streamlit Secrets untuk menyimpan konfigurasi database dan email OTP. 
 Buat file berikut:
-app/.streamlit/secrests.toml
+```bash
+app/.streamlit/secrets.toml
+```
+Kemudian lakukan konfigurasi PostgreSQL dan SMTP pada file ```secrets.toml sebagai berikut:
 ```
 # ===== PostgreSQL =====
 db_host = "YOUR_HOST"
 db_dbname = "YOUR_DBNAME"
 db_user = "YOUR_USER"
 db_password = "YOUR_PASSWORD"
-db_port = "YOUR_DB_PORT"
+db_port = "5432"
 
 # ===== SMTP (untuk OTP email) =====
 smtp = "smtp.gmail.com"
@@ -105,8 +109,10 @@ password = "YOUR_APP_PASSWORD"
 
 ### 4 Menjalankan Aplikasi
 Ketikan perintah berikut pada terminal:
+```bash
 cd app 
 python -m streamlit run home.py
+```
 ---
 
 ## Manual 
