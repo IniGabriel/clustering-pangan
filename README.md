@@ -74,23 +74,23 @@ clustering-pangan-main/
 ---
 
 ## Cara Instalasi 
-### 1 Clone Github
+### 1. Clone Github
 Lakukan import github dengan melakukan hal berikut di terminal:
 ```bash
 git clone https://github.com/IniGabriel/clustering-pangan.git
 ```
-### 2 Install Dependencies
+### 2. Install Dependencies
 Melakukan instalasi library dengan melakukan hal berikut di terminal:
 ```bash
 pip install -r requirements.txt
 ```
-### 3 Konfigurasi PostgreSQL dan SMTP
+### 3. Konfigurasi PostgreSQL dan SMTP
 Aplikasi ini menggunakan Streamlit Secrets untuk menyimpan konfigurasi database dan email OTP. 
 Buat file berikut:
 ```bash
 app/.streamlit/secrets.toml
 ```
-Kemudian lakukan konfigurasi PostgreSQL dan SMTP pada file ```secrets.toml sebagai berikut:
+Kemudian lakukan konfigurasi PostgreSQL dan SMTP pada file `secrets.toml` sebagai berikut:
 ```
 # ===== PostgreSQL =====
 db_host = "YOUR_HOST"
@@ -107,7 +107,7 @@ password = "YOUR_APP_PASSWORD"
 ```
 > Catatan: Jika menggunakan Gmail, pastikan menggunakan App Password, bukan password email utama.
 
-### 4 Menjalankan Aplikasi
+### 4. Menjalankan Aplikasi
 Ketikan perintah berikut pada terminal:
 ```bash
 cd app 
