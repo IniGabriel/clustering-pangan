@@ -84,7 +84,51 @@ Melakukan instalasi library dengan melakukan hal berikut di terminal:
 ```bash
 pip install -r requirements.txt
 ```
-### 3. Konfigurasi PostgreSQL dan SMTP
+
+### 3. Siapkan Tabel PostgreSQL
+Di kode, tabel `Pengguna` dibuat otomatis saat verifikasi email (jika belum ada).  
+Namun tabel **dataset** dan **model** perlu kamu siapkan di database (karena dipakai di `upload.py`, `dataset.py`, `train.py`).
+
+
+Berikut contoh query untuk membuat tabel tabel yang diperlukan:
+```sql
+-- 1) Tabel pengguna
+CREATE TABLE IF NOT EXISTS pengguna (
+  user_id   SERIAL PRIMARY KEY,
+  username  VARCHAR(50) NOT NULL,
+  email     VARCHAR(50) NOT NULL,
+  password  VARCHAR(255) NOT NULL
+);
+
+-- 2) Tabel dataset
+CREATE TABLE IF NOT EXISTS dataset (
+  dataset_id     SERIAL PRIMARY KEY,
+  nama_dataset   VARCHAR(100) NOT NULL,
+  path_dataset   vARCHAR(200) NOT NULL,
+  sudah_dilatih BOOLEAN DEFAULT FALSE,
+  user_id INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES pengguna (user_id) ON DELETE CASCADE
+);
+
+-- 3) Tabel model (hasil proses metode clustering)
+CREATE TABLE IF NOT EXISTS model (
+  model_id         SERIAL PRIMARY KEY,
+  nama_model       VARCHAR(100) NOT NULL,
+  path_model       VARCHAR(250) NOT NULL,
+  jumlah_cluster   INTEGER NOT NULL,
+  silhouette       NUMERIC(6,4),
+  dbi              NUMERIC(6,4),
+  waktu_komputasi  NUMERIC(10,4),
+  user_id INTEGER NOT NULL,
+  dataset_id INTEGER NOT NULL,
+  algoritma VARCHAR(10),
+
+  FOREIGN KEY (user_id) REFERENCES pengguna(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (dataset_id) REFERENCES dataset(dataset_id) ON DELETE CASCADE
+);
+```
+
+### 4. Konfigurasi PostgreSQL dan SMTP
 Aplikasi ini menggunakan Streamlit Secrets untuk menyimpan konfigurasi database dan email OTP. 
 Buat file berikut:
 ```bash
@@ -107,7 +151,7 @@ password = "YOUR_APP_PASSWORD"
 ```
 > Catatan: Jika menggunakan Gmail, pastikan menggunakan App Password, bukan password email utama.
 
-### 4. Menjalankan Aplikasi
+### 5. Menjalankan Aplikasi
 Ketikan perintah berikut pada terminal:
 ```bash
 cd app 
